@@ -1,5 +1,9 @@
+#!/usr/bin/env python3
+
 from __future__ import print_function
+
 import requests
+
 try:
     import ujson as json
 except ImportError:
@@ -9,11 +13,7 @@ from datetime import datetime
 from socketIO_client_nexus import SocketIO, BaseNamespace
 from sseclient import SSEClient
 from six import string_types
-
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse
+from urllib.parse import urlparse
 
 _URL_PREFIX = 'https://api.iextrading.com/1.0/'
 _URL_PREFIX2 = 'https://cloud.iexapis.com/{version}/'
@@ -24,7 +24,8 @@ _SIO_PORT = 443
 
 _SSE_URL_PREFIX = 'https://cloud-sse.iexapis.com/{version}/{channel}?symbols={symbols}&token={token}'
 _SSE_URL_PREFIX_ALL = 'https://cloud-sse.iexapis.com/{version}/{channel}?token={token}'
-_SSE_DEEP_URL_PREFIX = 'https://cloud-sse.iexapis.com/{version}/deep?symbols={symbols}&channels={channels}&token={token}'
+_SSE_DEEP_URL_PREFIX = \
+    'https://cloud-sse.iexapis.com/{version}/deep?symbols={symbols}&channels={channels}&token={token}'
 
 _TIMEFRAME_CHART = ['5y', '2y', '1y', 'ytd', '6m', '3m', '1m', '1d']
 _TIMEFRAME_DIVSPLIT = ['5y', '2y', '1y', 'ytd', '6m', '3m', '1m']
@@ -96,7 +97,9 @@ class PyEXception(Exception):
 
 
 def _getJson(url, token='', version=''):
-    '''for backwards compat, accepting token and version but ignoring'''
+    """
+    For backwards compatibility, accepting token and version but ignoring
+    """
     if token:
         if version == 'sandbox':
             return _getJsonIEXCloudSandbox(url, token, version)
@@ -105,7 +108,7 @@ def _getJson(url, token='', version=''):
 
 
 def _getJsonOrig(url):
-    '''internal'''
+    """internal"""
     url = _URL_PREFIX + url
     resp = requests.get(urlparse(url).geturl(), proxies=_PYEX_PROXIES)
     if resp.status_code == 200:
@@ -114,7 +117,7 @@ def _getJsonOrig(url):
 
 
 def _getJsonIEXCloud(url, token='', version='beta'):
-    '''for iex cloud'''
+    """for iex cloud"""
     url = _URL_PREFIX2.format(version=version) + url
     resp = requests.get(urlparse(url).geturl(), proxies=_PYEX_PROXIES, params={'token': token})
     if resp.status_code == 200:
@@ -123,7 +126,7 @@ def _getJsonIEXCloud(url, token='', version='beta'):
 
 
 def _getJsonIEXCloudSandbox(url, token='', version='beta'):
-    '''for iex cloud'''
+    """for iex cloud"""
     url = _URL_PREFIX2_SANDBOX.format(version='beta') + url
     resp = requests.get(urlparse(url).geturl(), proxies=_PYEX_PROXIES, params={'token': token})
     if resp.status_code == 200:
@@ -132,24 +135,24 @@ def _getJsonIEXCloudSandbox(url, token='', version='beta'):
 
 
 def _wsURL(url):
-    '''internal'''
+    """internal"""
     return '/1.0/' + url
 
 
 def _strToList(st):
-    '''internal'''
+    """internal"""
     if isinstance(st, string_types):
         return [st]
     return st
 
 
 def _strCommaSeparatedString(st):
-    '''internal'''
+    """internal"""
     return ','.join(_strToList(st))
 
 
 def _strOrDate(st):
-    '''internal'''
+    """internal"""
     if isinstance(st, string_types):
         return st
     elif isinstance(st, datetime):
@@ -158,13 +161,13 @@ def _strOrDate(st):
 
 
 def _raiseIfNotStr(s):
-    '''internal'''
+    """internal"""
     if s is not None and not isinstance(s, string_types):
         raise PyEXception('Cannot use type %s' % str(type(s)))
 
 
 def _tryJson(data, raw=True):
-    '''internal'''
+    """internal"""
     if raw:
         return data
     try:
@@ -175,11 +178,11 @@ def _tryJson(data, raw=True):
 
 class WSClient(object):
     def __init__(self, addr, sendinit=None, on_data=None, on_open=None, on_close=None, raw=True):
-        '''
+        """
            addr: path to sio
            sendinit: tuple to emit
            on_data, on_open, on_close: functions to call
-       '''
+        """
         self.addr = addr
         self.sendinit = sendinit
 
@@ -208,13 +211,13 @@ class WSClient(object):
 
 
 def _stream(url, sendinit=None, on_data=print):
-    '''internal'''
+    """internal"""
     cl = WSClient(url, sendinit=sendinit, on_data=on_data)
     return cl
 
 
 def _streamSSE(url, on_data=print, accrue=False):
-    '''internal'''
+    """internal"""
     messages = SSEClient(url)
     if accrue:
         ret = []
@@ -229,13 +232,13 @@ def _streamSSE(url, on_data=print, accrue=False):
 
 
 def _reindex(df, col):
-    '''internal'''
+    """internal"""
     if col in df.columns:
         df.set_index(col, inplace=True)
 
 
 def _toDatetime(df, cols=None, tcols=None):
-    '''internal'''
+    """internal"""
     cols = cols if cols is not None else _STANDARD_DATE_FIELDS
     tcols = tcols if tcols is not None else _STANDARD_TIME_FIELDS
 
@@ -249,10 +252,11 @@ def _toDatetime(df, cols=None, tcols=None):
 
 
 def setProxy(proxies=None):
-    '''Set proxies argument for requests
+    """
+    Set proxies argument for requests
 
     Args:
         proxies (dict): Proxies to set
-    '''
+    """
     global _PYEX_PROXIES
     _PYEX_PROXIES = proxies

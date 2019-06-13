@@ -1,10 +1,33 @@
+#!/usr/bin/env python3
+
 import os
 from functools import partial
-from .common import PyEXception, _getJson, _USAGE_TYPES
 
-from .refdata import symbols, iexSymbols, mutualFundSymbols, otcSymbols, internationalSymbols, fxSymbols, optionsSymbols, \
+from .alternative import crypto, cryptoDF, \
+    sentiment, sentimentDF, \
+    ceoCompensation, ceoCompensationDF
+from .common import PyEXception, _getJson, _USAGE_TYPES
+from .marketdata.http import tops, topsDF, \
+    last, lastDF, \
+    deep, deepDF, \
+    trades, tradesDF, \
+    auction, auctionDF, \
+    book as deepBook, bookDF as deepBookDF, \
+    opHaltStatus, opHaltStatusDF, \
+    officialPrice, officialPriceDF, \
+    securityEvent, securityEventDF, \
+    ssrStatus, ssrStatusDF, \
+    systemEvent, systemEventDF, \
+    tradeBreak, tradeBreakDF, \
+    tradingStatus, tradingStatusDF
+from .marketdata.sse import topsSSE, lastSSE, deepSSE, tradesSSE
+from .markets import markets, marketsDF
+from .points import points, pointsDF
+from .refdata import symbols, iexSymbols, mutualFundSymbols, otcSymbols, internationalSymbols, fxSymbols, \
+    optionsSymbols, \
     symbolsDF, iexSymbolsDF, mutualFundSymbolsDF, otcSymbolsDF, internationalSymbolsDF, fxSymbolsDF, optionsSymbolsDF, \
-    symbolsList, iexSymbolsList, mutualFundSymbolsList, otcSymbolsList, internationalSymbolsList, fxSymbolsList, optionsSymbolsList, \
+    symbolsList, iexSymbolsList, mutualFundSymbolsList, otcSymbolsList, internationalSymbolsList, fxSymbolsList, \
+    optionsSymbolsList, \
     corporateActions, corporateActionsDF, \
     dividends as refDividends, dividendsDF as refDividendsDF, \
     nextDayExtDate, nextDayExtDateDF, \
@@ -14,15 +37,11 @@ from .refdata import symbols, iexSymbols, mutualFundSymbols, otcSymbols, interna
     internationalExchanges, internationalExchangesDF, \
     sectors, sectorsDF, \
     tags, tagsDF
-
-from .markets import markets, marketsDF
-
 from .stats import stats, statsDF, \
     recent, recentDF, \
     records, recordsDF, \
     summary, summaryDF, \
     daily, dailyDF
-
 from .stocks import advancedStats, advancedStatsDF, \
     balanceSheet, balanceSheetDF, \
     batch, batchDF, bulkBatch, bulkBatchDF, \
@@ -69,27 +88,6 @@ from .stocks import advancedStats, advancedStatsDF, \
     threshold, thresholdDF, \
     volumeByVenue, volumeByVenueDF, \
     yesterday, yesterdayDF
-
-from .alternative import crypto, cryptoDF, \
-    sentiment, sentimentDF, \
-    ceoCompensation, ceoCompensationDF
-
-from .marketdata.sse import topsSSE, lastSSE, deepSSE, tradesSSE
-from .marketdata.http import tops, topsDF, \
-    last, lastDF, \
-    deep, deepDF, \
-    trades, tradesDF, \
-    auction, auctionDF, \
-    book as deepBook, bookDF as deepBookDF, \
-    opHaltStatus, opHaltStatusDF, \
-    officialPrice, officialPriceDF, \
-    securityEvent, securityEventDF, \
-    ssrStatus, ssrStatusDF, \
-    systemEvent, systemEventDF, \
-    tradeBreak, tradeBreakDF, \
-    tradingStatus, tradingStatusDF
-
-from .points import points, pointsDF
 
 _INCLUDE_FUNCTIONS = [
     # Refdata
@@ -295,7 +293,8 @@ _INCLUDE_FUNCTIONS = [
 
 
 class Client(object):
-    '''IEX Cloud Client
+    """
+    IEX Cloud Client
 
     Client has access to all methods provided as standalone, but in an authenticated way
 
@@ -303,7 +302,8 @@ class Client(object):
         api_token (string): api token (can pickup from IEX_TOKEN environment variable)
         version (string): api version to use (defaults to beta)
                           set version to 'sandbox' to run against the IEX sandbox
-    '''
+    """
+
     def __init__(self, api_token=None, version='beta'):
         self._token = api_token or os.environ.get('IEX_TOKEN', '')
         if not self._token:

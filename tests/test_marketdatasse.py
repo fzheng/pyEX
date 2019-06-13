@@ -1,5 +1,8 @@
+#!/usr/bin/env python3
+
 # for Coverage
 from mock import patch, MagicMock
+
 SYMBOL = 'aapl'
 
 

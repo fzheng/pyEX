@@ -1,16 +1,22 @@
+#!/usr/bin/env python3
+
 import itertools
-import requests
-import pandas as pd
-import numpy as np
 from io import BytesIO
-from IPython.display import Image as ImageI
 from multiprocessing.pool import ThreadPool
+
+import numpy as np
+import pandas as pd
+import requests
+from IPython.display import Image as ImageI
 from PIL import Image as ImageP
-from .common import _TIMEFRAME_CHART, _TIMEFRAME_DIVSPLIT, _LIST_OPTIONS, _COLLECTION_TAGS, _getJson, _raiseIfNotStr, PyEXception, _strOrDate, _reindex, _toDatetime, _BATCH_TYPES
+
+from .common import _TIMEFRAME_CHART, _TIMEFRAME_DIVSPLIT, _LIST_OPTIONS, _COLLECTION_TAGS, _getJson, _raiseIfNotStr, \
+    PyEXception, _strOrDate, _reindex, _toDatetime, _BATCH_TYPES
 
 
 def advancedStats(symbol, token='', version=''):
-    '''Returns everything in key stats plus additional advanced stats such as EBITDA, ratios, key financial data, and more.
+    """
+    Returns everything in key stats plus additional advanced stats such as EBITDA, ratios, key financial data, and more.
 
     https://iexcloud.io/docs/api/#advanced-stats
     4am, 5am ET
@@ -22,13 +28,14 @@ def advancedStats(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/advanced-stats', token, version)
 
 
 def advancedStatsDF(symbol, token='', version=''):
-    '''Returns everything in key stats plus additional advanced stats such as EBITDA, ratios, key financial data, and more.
+    """
+    Returns everything in key stats plus additional advanced stats such as EBITDA, ratios, key financial data, and more.
 
     https://iexcloud.io/docs/api/#advanced-stats
     4am, 5am ET
@@ -40,7 +47,7 @@ def advancedStatsDF(symbol, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     val = advancedStats(symbol, token, version)
     df = pd.io.json.json_normalize(val)
     _toDatetime(df)
@@ -48,7 +55,8 @@ def advancedStatsDF(symbol, token='', version=''):
 
 
 def balanceSheet(symbol, token='', version=''):
-    '''Pulls balance sheet data. Available quarterly (4 quarters) and annually (4 years)
+    """
+    Pulls balance sheet data. Available quarterly (4 quarters) and annually (4 years)
 
     https://iexcloud.io/docs/api/#balance-sheet
     Updates at 8am, 9am UTC daily
@@ -61,13 +69,14 @@ def balanceSheet(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/balance-sheet', token, version)
 
 
 def balanceSheetDF(symbol, token='', version=''):
-    '''Pulls balance sheet data. Available quarterly (4 quarters) and annually (4 years)
+    """
+    Pulls balance sheet data. Available quarterly (4 quarters) and annually (4 years)
 
     https://iexcloud.io/docs/api/#balance-sheet
     Updates at 8am, 9am UTC daily
@@ -80,7 +89,7 @@ def balanceSheetDF(symbol, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     val = balanceSheet(symbol, token, version)
     df = pd.io.json.json_normalize(val, 'balancesheet', 'symbol')
     _toDatetime(df)
@@ -89,7 +98,8 @@ def balanceSheetDF(symbol, token='', version=''):
 
 
 def batch(symbols, fields=None, range_='1m', last=10, token='', version=''):
-    '''Batch several data requests into one invocation
+    """
+    Batch several data requests into one invocation
 
     https://iexcloud.io/docs/api/#batch-requests
 
@@ -104,7 +114,7 @@ def batch(symbols, fields=None, range_='1m', last=10, token='', version=''):
 
     Returns:
         dict: results in json
-    '''
+    """
     fields = fields or _BATCH_TYPES[:10]  # limit 10
 
     if not isinstance(symbols, [].__class__):
@@ -123,12 +133,14 @@ def batch(symbols, fields=None, range_='1m', last=10, token='', version=''):
 
     if len(symbols) > 100:
         raise PyEXception('IEX will only handle up to 100 symbols at a time!')
-    route = 'stock/market/batch?symbols={}&types={}&range={}&last={}'.format(','.join(symbols), ','.join(fields), range_, last)
+    route = 'stock/market/batch?symbols={}&types={}&range={}&last={}'.format(','.join(symbols), ','.join(fields),
+                                                                             range_, last)
     return _getJson(route, token, version)
 
 
 def batchDF(symbols, fields=None, range_='1m', last=10, token='', version=''):
-    '''Batch several data requests into one invocation
+    """
+    Batch several data requests into one invocation
 
     https://iexcloud.io/docs/api/#batch-requests
 
@@ -143,7 +155,7 @@ def batchDF(symbols, fields=None, range_='1m', last=10, token='', version=''):
 
     Returns:
         DataFrame: results in json
-    '''
+    """
     x = batch(symbols, fields, range_, last, token, version)
 
     ret = {}
@@ -166,7 +178,8 @@ def batchDF(symbols, fields=None, range_='1m', last=10, token='', version=''):
 
 
 def bulkBatch(symbols, fields=None, range_='1m', last=10, token='', version=''):
-    '''Optimized batch to fetch as much as possible at once
+    """
+    Optimized batch to fetch as much as possible at once
 
     https://iexcloud.io/docs/api/#batch-requests
 
@@ -181,7 +194,7 @@ def bulkBatch(symbols, fields=None, range_='1m', last=10, token='', version=''):
 
     Returns:
         dict: results in json
-    '''
+    """
     fields = fields or _BATCH_TYPES
     args = []
     empty_data = []
@@ -191,7 +204,7 @@ def bulkBatch(symbols, fields=None, range_='1m', last=10, token='', version=''):
         raise PyEXception('Symbols must be of type list')
 
     for i in range(0, len(symbols), 99):
-        args.append((symbols[i:i+99], fields, range_, last, token, version))
+        args.append((symbols[i:i + 99], fields, range_, last, token, version))
 
     pool = ThreadPool(20)
     rets = pool.starmap(batch, args)
@@ -215,7 +228,8 @@ def bulkBatch(symbols, fields=None, range_='1m', last=10, token='', version=''):
 
 
 def bulkBatchDF(symbols, fields=None, range_='1m', last=10, token='', version=''):
-    '''Optimized batch to fetch as much as possible at once
+    """
+    Optimized batch to fetch as much as possible at once
 
     https://iexcloud.io/docs/api/#batch-requests
 
@@ -230,7 +244,7 @@ def bulkBatchDF(symbols, fields=None, range_='1m', last=10, token='', version=''
 
     Returns:
         DataFrame: results in json
-    '''
+    """
     dat = bulkBatch(symbols, fields, range_, last, token, version)
     ret = {}
     for symbol in dat:
@@ -247,7 +261,8 @@ def bulkBatchDF(symbols, fields=None, range_='1m', last=10, token='', version=''
 
 
 def book(symbol, token='', version=''):
-    '''Book data
+    """
+    Book data
 
     https://iextrading.com/developer/docs/#book
     realtime during Investors Exchange market hours
@@ -259,13 +274,13 @@ def book(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/book', token, version)
 
 
 def _bookToDF(b):
-    '''internal'''
+    """internal"""
     quote = b.get('quote', [])
     asks = b.get('asks', [])
     bids = b.get('bids', [])
@@ -292,7 +307,8 @@ def _bookToDF(b):
 
 
 def bookDF(symbol, token='', version=''):
-    '''Book data
+    """
+    Book data
 
     https://iextrading.com/developer/docs/#book
     realtime during Investors Exchange market hours
@@ -304,14 +320,15 @@ def bookDF(symbol, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     x = book(symbol, token, version)
     df = _bookToDF(x)
     return df
 
 
 def cashFlow(symbol, token='', version=''):
-    '''Pulls cash flow data. Available quarterly (4 quarters) or annually (4 years).
+    """
+    Pulls cash flow data. Available quarterly (4 quarters) or annually (4 years).
 
     https://iexcloud.io/docs/api/#cash-flow
     Updates at 8am, 9am UTC daily
@@ -324,13 +341,14 @@ def cashFlow(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/cash-flow', token, version)
 
 
 def cashFlowDF(symbol, token='', version=''):
-    '''Pulls cash flow data. Available quarterly (4 quarters) or annually (4 years).
+    """
+    Pulls cash flow data. Available quarterly (4 quarters) or annually (4 years).
 
     https://iexcloud.io/docs/api/#cash-flow
     Updates at 8am, 9am UTC daily
@@ -343,7 +361,7 @@ def cashFlowDF(symbol, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     val = cashFlow(symbol, token, version)
     df = pd.io.json.json_normalize(val, 'cashflow', 'symbol')
     _toDatetime(df)
@@ -353,7 +371,8 @@ def cashFlowDF(symbol, token='', version=''):
 
 
 def chart(symbol, timeframe='1m', date=None, token='', version=''):
-    '''Historical price/volume data, daily and intraday
+    """
+    Historical price/volume data, daily and intraday
 
     https://iexcloud.io/docs/api/#historical-prices
     Data Schedule
@@ -371,7 +390,7 @@ def chart(symbol, timeframe='1m', date=None, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     if timeframe is not None and timeframe != '1d':
         if timeframe not in _TIMEFRAME_CHART:
@@ -384,7 +403,7 @@ def chart(symbol, timeframe='1m', date=None, token='', version=''):
 
 
 def _chartToDF(c):
-    '''internal'''
+    """internal"""
     df = pd.DataFrame(c)
     _toDatetime(df)
     _reindex(df, 'date')
@@ -392,7 +411,8 @@ def _chartToDF(c):
 
 
 def chartDF(symbol, timeframe='1m', date=None, token='', version=''):
-    '''Historical price/volume data, daily and intraday
+    """
+    Historical price/volume data, daily and intraday
 
     https://iexcloud.io/docs/api/#historical-prices
     Data Schedule
@@ -410,7 +430,7 @@ def chartDF(symbol, timeframe='1m', date=None, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     c = chart(symbol, timeframe, date, token, version)
     df = pd.DataFrame(c)
     _toDatetime(df)
@@ -425,7 +445,7 @@ def chartDF(symbol, timeframe='1m', date=None, token='', version=''):
 
 
 def bulkMinuteBars(symbol, dates, token='', version=''):
-    '''fetch many dates worth of minute-bars for a given symbol'''
+    """fetch many dates worth of minute-bars for a given symbol"""
     _raiseIfNotStr(symbol)
     dates = [_strOrDate(date) for date in dates]
     list_orig = dates.__class__
@@ -442,7 +462,7 @@ def bulkMinuteBars(symbol, dates, token='', version=''):
 
 
 def bulkMinuteBarsDF(symbol, dates, token='', version=''):
-    '''fetch many dates worth of minute-bars for a given symbol'''
+    """fetch many dates worth of minute-bars for a given symbol"""
     data = bulkMinuteBars(symbol, dates, token, version)
     df = pd.DataFrame(data)
     if df.empty:
@@ -453,7 +473,9 @@ def bulkMinuteBarsDF(symbol, dates, token='', version=''):
 
 
 def collections(tag, collectionName, token='', version=''):
-    '''Returns an array of quote objects for a given collection type. Currently supported collection types are sector, tag, and list
+    """
+    Returns an array of quote objects for a given collection type.
+    Currently supported collection types are sector, tag, and list
 
 
     https://iexcloud.io/docs/api/#collections
@@ -466,14 +488,16 @@ def collections(tag, collectionName, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     if tag not in _COLLECTION_TAGS:
         raise PyEXception('Tag must be in %s' % str(_COLLECTION_TAGS))
     return _getJson('stock/market/collection/' + tag + '?collectionName=' + collectionName, token, version)
 
 
 def collectionsDF(tag, query, token='', version=''):
-    '''Returns an array of quote objects for a given collection type. Currently supported collection types are sector, tag, and list
+    """
+    Returns an array of quote objects for a given collection type.
+    Currently supported collection types are sector, tag, and list
 
 
     https://iexcloud.io/docs/api/#collections
@@ -486,7 +510,7 @@ def collectionsDF(tag, query, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     df = pd.DataFrame(collections(tag, query, token, version))
     _toDatetime(df)
     _reindex(df, 'symbol')
@@ -494,7 +518,8 @@ def collectionsDF(tag, query, token='', version=''):
 
 
 def company(symbol, token='', version=''):
-    '''Company reference data
+    """
+    Company reference data
 
     https://iexcloud.io/docs/api/#company
     Updates at 4am and 5am UTC every day
@@ -506,13 +531,13 @@ def company(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/company', token, version)
 
 
 def _companyToDF(c, token='', version=''):
-    '''internal'''
+    """internal"""
     df = pd.io.json.json_normalize(c)
     _toDatetime(df)
     _reindex(df, 'symbol')
@@ -520,7 +545,8 @@ def _companyToDF(c, token='', version=''):
 
 
 def companyDF(symbol, token='', version=''):
-    '''Company reference data
+    """
+    Company reference data
 
     https://iexcloud.io/docs/api/#company
     Updates at 4am and 5am UTC every day
@@ -532,14 +558,15 @@ def companyDF(symbol, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     c = company(symbol, token, version)
     df = _companyToDF(c)
     return df
 
 
 def delayedQuote(symbol, token='', version=''):
-    '''This returns the 15 minute delayed market quote.
+    """
+    This returns the 15 minute delayed market quote.
 
     https://iexcloud.io/docs/api/#delayed-quote
     15min delayed
@@ -552,13 +579,14 @@ def delayedQuote(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/delayed-quote', token, version)
 
 
 def delayedQuoteDF(symbol, token='', version=''):
-    '''This returns the 15 minute delayed market quote.
+    """
+    This returns the 15 minute delayed market quote.
 
     https://iexcloud.io/docs/api/#delayed-quote
     15min delayed
@@ -571,7 +599,7 @@ def delayedQuoteDF(symbol, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     df = pd.io.json.json_normalize(delayedQuote(symbol, token, version))
     _toDatetime(df)
     _reindex(df, 'symbol')
@@ -579,7 +607,8 @@ def delayedQuoteDF(symbol, token='', version=''):
 
 
 def dividends(symbol, timeframe='ytd', token='', version=''):
-    '''Dividend history
+    """
+    Dividend history
 
     https://iexcloud.io/docs/api/#dividends
     Updated at 9am UTC every day
@@ -591,7 +620,7 @@ def dividends(symbol, timeframe='ytd', token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     if timeframe not in _TIMEFRAME_DIVSPLIT:
         raise PyEXception('Range must be in %s' % str(_TIMEFRAME_DIVSPLIT))
@@ -599,7 +628,7 @@ def dividends(symbol, timeframe='ytd', token='', version=''):
 
 
 def _dividendsToDF(d):
-    '''internal'''
+    """internal"""
     df = pd.DataFrame(d)
     _toDatetime(df)
     _reindex(df, 'exDate')
@@ -607,7 +636,8 @@ def _dividendsToDF(d):
 
 
 def dividendsDF(symbol, timeframe='ytd', token='', version=''):
-    '''Dividend history
+    """
+    Dividend history
 
     https://iexcloud.io/docs/api/#dividends
     Updated at 9am UTC every day
@@ -619,14 +649,16 @@ def dividendsDF(symbol, timeframe='ytd', token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     d = dividends(symbol, timeframe, token, version)
     df = _dividendsToDF(d)
     return df
 
 
 def earnings(symbol, token='', version=''):
-    '''Earnings data for a given company including the actual EPS, consensus, and fiscal period. Earnings are available quarterly (last 4 quarters) and annually (last 4 years).
+    """
+    Earnings data for a given company including the actual EPS, consensus, and fiscal period.
+    Earnings are available quarterly (last 4 quarters) and annually (last 4 years).
 
     https://iexcloud.io/docs/api/#earnings
     Updates at 9am, 11am, 12pm UTC every day
@@ -638,13 +670,13 @@ def earnings(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/earnings', token, version)
 
 
 def _earningsToDF(e):
-    '''internal'''
+    """internal"""
     if e:
         df = pd.io.json.json_normalize(e, 'earnings', 'symbol')
         _toDatetime(df)
@@ -655,7 +687,9 @@ def _earningsToDF(e):
 
 
 def earningsDF(symbol, token='', version=''):
-    '''Earnings data for a given company including the actual EPS, consensus, and fiscal period. Earnings are available quarterly (last 4 quarters) and annually (last 4 years).
+    """
+    Earnings data for a given company including the actual EPS, consensus, and fiscal period.
+    Earnings are available quarterly (last 4 quarters) and annually (last 4 years).
 
     https://iexcloud.io/docs/api/#earnings
     Updates at 9am, 11am, 12pm UTC every day
@@ -667,14 +701,15 @@ def earningsDF(symbol, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     e = earnings(symbol, token, version)
     df = _earningsToDF(e)
     return df
 
 
 def earningsToday(token='', version=''):
-    '''Returns earnings that will be reported today as two arrays: before the open bto and after market close amc.
+    """
+    Returns earnings that will be reported today as two arrays: before the open bto and after market close amc.
     Each array contains an object with all keys from earnings, a quote object, and a headline key.
 
     https://iexcloud.io/docs/api/#earnings-today
@@ -687,12 +722,13 @@ def earningsToday(token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     return _getJson('stock/market/today-earnings', token, version)
 
 
 def earningsTodayDF(token='', version=''):
-    '''Returns earnings that will be reported today as two arrays: before the open bto and after market close amc.
+    """
+    Returns earnings that will be reported today as two arrays: before the open bto and after market close amc.
     Each array contains an object with all keys from earnings, a quote object, and a headline key.
 
     https://iexcloud.io/docs/api/#earnings-today
@@ -705,7 +741,7 @@ def earningsTodayDF(token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     x = earningsToday(token, version)
     z = []
     for k in x:
@@ -724,8 +760,10 @@ def earningsTodayDF(token='', version=''):
 
 
 def spread(symbol, token='', version=''):
-    '''This returns an array of effective spread, eligible volume, and price improvement of a stock, by market.
-    Unlike volume-by-venue, this will only return a venue if effective spread is not ‘N/A’. Values are sorted in descending order by effectiveSpread.
+    """
+    This returns an array of effective spread, eligible volume, and price improvement of a stock, by market.
+    Unlike volume-by-venue, this will only return a venue if effective spread is not ‘N/A’.
+    Values are sorted in descending order by effectiveSpread.
     Lower effectiveSpread and higher priceImprovement values are generally considered optimal.
 
     Effective spread is designed to measure marketable orders executed in relation to the market center’s
@@ -746,14 +784,16 @@ def spread(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/effective-spread', token, version)
 
 
 def spreadDF(symbol, token='', version=''):
-    '''This returns an array of effective spread, eligible volume, and price improvement of a stock, by market.
-    Unlike volume-by-venue, this will only return a venue if effective spread is not ‘N/A’. Values are sorted in descending order by effectiveSpread.
+    """
+    This returns an array of effective spread, eligible volume, and price improvement of a stock, by market.
+    Unlike volume-by-venue, this will only return a venue if effective spread is not ‘N/A’.
+    Values are sorted in descending order by effectiveSpread.
     Lower effectiveSpread and higher priceImprovement values are generally considered optimal.
 
     Effective spread is designed to measure marketable orders executed in relation to the market center’s
@@ -774,7 +814,7 @@ def spreadDF(symbol, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     df = pd.DataFrame(spread(symbol, token, version))
     _toDatetime(df)
     _reindex(df, 'venue')
@@ -782,7 +822,8 @@ def spreadDF(symbol, token='', version=''):
 
 
 def estimates(symbol, token='', version=''):
-    '''Provides the latest consensus estimate for the next fiscal period
+    """
+    Provides the latest consensus estimate for the next fiscal period
 
     https://iexcloud.io/docs/api/#estimates
     Updates at 9am, 11am, 12pm UTC every day
@@ -794,13 +835,13 @@ def estimates(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/estimates', token, version)
 
 
 def _estimatesToDF(f):
-    '''internal'''
+    """internal"""
     if f:
         df = pd.io.json.json_normalize(f, 'estimates', 'symbol')
         _toDatetime(df)
@@ -811,7 +852,8 @@ def _estimatesToDF(f):
 
 
 def estimatesDF(symbol, token='', version=''):
-    '''Provides the latest consensus estimate for the next fiscal period
+    """
+    Provides the latest consensus estimate for the next fiscal period
 
     https://iexcloud.io/docs/api/#estimates
     Updates at 9am, 11am, 12pm UTC every day
@@ -823,14 +865,15 @@ def estimatesDF(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     f = estimates(symbol, token, version)
     df = _estimatesToDF(f)
     return df
 
 
 def financials(symbol, token='', version=''):
-    '''Pulls income statement, balance sheet, and cash flow data from the four most recent reported quarters.
+    """
+    Pulls income statement, balance sheet, and cash flow data from the four most recent reported quarters.
 
     https://iexcloud.io/docs/api/#financials
     Updates at 8am, 9am UTC daily
@@ -842,13 +885,13 @@ def financials(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/financials', token, version)
 
 
 def _financialsToDF(f):
-    '''internal'''
+    """internal"""
     if f:
         df = pd.io.json.json_normalize(f, 'financials', 'symbol')
         _toDatetime(df)
@@ -859,7 +902,8 @@ def _financialsToDF(f):
 
 
 def financialsDF(symbol, token='', version=''):
-    '''Pulls income statement, balance sheet, and cash flow data from the four most recent reported quarters.
+    """
+    Pulls income statement, balance sheet, and cash flow data from the four most recent reported quarters.
 
     https://iexcloud.io/docs/api/#financials
     Updates at 8am, 9am UTC daily
@@ -871,15 +915,16 @@ def financialsDF(symbol, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     f = financials(symbol, token, version)
     df = _financialsToDF(f)
     return df
 
 
 def fundOwnership(symbol, token='', version=''):
-    '''Returns the top 10 fund holders, meaning any firm not defined as buy-side or sell-side such as mutual funds,
-       pension funds, endowments, investment firms, and other large entities that manage funds on behalf of others.
+    """
+    Returns the top 10 fund holders, meaning any firm not defined as buy-side or sell-side such as mutual funds,
+    pension funds, endowments, investment firms, and other large entities that manage funds on behalf of others.
 
     https://iexcloud.io/docs/api/#fund-ownership
     Updates at 5am, 6am ET every day
@@ -891,14 +936,15 @@ def fundOwnership(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/fund-ownership', token, version)
 
 
 def fundOwnershipDF(symbol, token='', version=''):
-    '''Returns the top 10 fund holders, meaning any firm not defined as buy-side or sell-side such as mutual funds,
-       pension funds, endowments, investment firms, and other large entities that manage funds on behalf of others.
+    """
+    Returns the top 10 fund holders, meaning any firm not defined as buy-side or sell-side such as mutual funds,
+    pension funds, endowments, investment firms, and other large entities that manage funds on behalf of others.
 
     https://iexcloud.io/docs/api/#fund-ownership
     Updates at 5am, 6am ET every day
@@ -911,7 +957,7 @@ def fundOwnershipDF(symbol, token='', version=''):
     Returns:
 
         DataFrame: result
-    '''
+    """
     val = fundOwnership(symbol, token, version)
     df = pd.DataFrame(val)
     _toDatetime(df)
@@ -919,7 +965,8 @@ def fundOwnershipDF(symbol, token='', version=''):
 
 
 def incomeStatement(symbol, token='', version=''):
-    '''Pulls income statement data. Available quarterly (4 quarters) or annually (4 years).
+    """
+    Pulls income statement data. Available quarterly (4 quarters) or annually (4 years).
 
     https://iexcloud.io/docs/api/#income-statement
     Updates at 8am, 9am UTC daily
@@ -931,13 +978,14 @@ def incomeStatement(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/income', token, version)
 
 
 def incomeStatementDF(symbol, token='', version=''):
-    '''Pulls income statement data. Available quarterly (4 quarters) or annually (4 years).
+    """
+    Pulls income statement data. Available quarterly (4 quarters) or annually (4 years).
 
     https://iexcloud.io/docs/api/#income-statement
     Updates at 8am, 9am UTC daily
@@ -949,7 +997,7 @@ def incomeStatementDF(symbol, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     val = incomeStatement(symbol, token, version)
     df = pd.io.json.json_normalize(val, 'income', 'symbol')
     _toDatetime(df)
@@ -958,7 +1006,8 @@ def incomeStatementDF(symbol, token='', version=''):
 
 
 def insiderRoster(symbol, token='', version=''):
-    '''Returns the top 10 insiders, with the most recent information.
+    """
+    Returns the top 10 insiders, with the most recent information.
 
     https://iexcloud.io/docs/api/#insider-roster
     Updates at 5am, 6am ET every day
@@ -970,13 +1019,14 @@ def insiderRoster(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/insider-roster', token, version)
 
 
 def insiderRosterDF(symbol, token='', version=''):
-    '''Returns the top 10 insiders, with the most recent information.
+    """
+    Returns the top 10 insiders, with the most recent information.
 
     https://iexcloud.io/docs/api/#insider-roster
     Updates at 5am, 6am ET every day
@@ -988,7 +1038,7 @@ def insiderRosterDF(symbol, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     val = insiderRoster(symbol, token, version)
     df = pd.DataFrame(val)
     _toDatetime(df, cols=[], tcols=['reportDate'])
@@ -996,7 +1046,8 @@ def insiderRosterDF(symbol, token='', version=''):
 
 
 def insiderSummary(symbol, token='', version=''):
-    '''Returns aggregated insiders summary data for the last 6 months.
+    """
+    Returns aggregated insiders summary data for the last 6 months.
 
     https://iexcloud.io/docs/api/#insider-summary
     Updates at 5am, 6am ET every day
@@ -1008,13 +1059,14 @@ def insiderSummary(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/insider-summary', token, version)
 
 
 def insiderSummaryDF(symbol, token='', version=''):
-    '''Returns aggregated insiders summary data for the last 6 months.
+    """
+    Returns aggregated insiders summary data for the last 6 months.
 
     https://iexcloud.io/docs/api/#insider-summary
     Updates at 5am, 6am ET every day
@@ -1026,7 +1078,7 @@ def insiderSummaryDF(symbol, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     val = insiderSummary(symbol, token, version)
     df = pd.DataFrame(val)
     _toDatetime(df)
@@ -1034,7 +1086,8 @@ def insiderSummaryDF(symbol, token='', version=''):
 
 
 def insiderTransactions(symbol, token='', version=''):
-    '''Returns insider transactions.
+    """
+    Returns insider transactions.
 
     https://iexcloud.io/docs/api/#insider-transactions
     Updates at UTC every day
@@ -1046,13 +1099,14 @@ def insiderTransactions(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/insider-transactions', token, version)
 
 
 def insiderTransactionsDF(symbol, token='', version=''):
-    '''Returns insider transactions.
+    """
+    Returns insider transactions.
 
     https://iexcloud.io/docs/api/#insider-transactions
     Updates at UTC every day
@@ -1064,7 +1118,7 @@ def insiderTransactionsDF(symbol, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     val = insiderSummary(symbol, token, version)
     df = pd.DataFrame(val)
     _toDatetime(df)
@@ -1072,7 +1126,8 @@ def insiderTransactionsDF(symbol, token='', version=''):
 
 
 def institutionalOwnership(symbol, token='', version=''):
-    '''Returns the top 10 institutional holders, defined as buy-side or sell-side firms.
+    """
+    Returns the top 10 institutional holders, defined as buy-side or sell-side firms.
 
     https://iexcloud.io/docs/api/#institutional-ownership
     Updates at 5am, 6am ET every day
@@ -1084,13 +1139,14 @@ def institutionalOwnership(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/institutional-ownership', token, version)
 
 
 def institutionalOwnershipDF(symbol, token='', version=''):
-    '''Returns the top 10 institutional holders, defined as buy-side or sell-side firms.
+    """
+    Returns the top 10 institutional holders, defined as buy-side or sell-side firms.
 
     https://iexcloud.io/docs/api/#institutional-ownership
     Updates at 5am, 6am ET every day
@@ -1102,7 +1158,7 @@ def institutionalOwnershipDF(symbol, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     val = institutionalOwnership(symbol, token, version)
     df = pd.DataFrame(val)
     _toDatetime(df, cols=[], tcols=['reportDate'])
@@ -1110,7 +1166,8 @@ def institutionalOwnershipDF(symbol, token='', version=''):
 
 
 def intraday(symbol, token='', version=''):
-    '''This endpoint will return aggregated intraday prices in one minute buckets
+    """
+    This endpoint will return aggregated intraday prices in one minute buckets
 
     https://iexcloud.io/docs/api/#intraday-prices
     9:30-4pm ET Mon-Fri on regular market trading days
@@ -1124,13 +1181,14 @@ def intraday(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/intraday-prices', token, version)
 
 
 def intradayDF(symbol, token='', version=''):
-    '''This endpoint will return aggregated intraday prices in one minute buckets
+    """
+    This endpoint will return aggregated intraday prices in one minute buckets
 
     https://iexcloud.io/docs/api/#intraday-prices
     9:30-4pm ET Mon-Fri on regular market trading days
@@ -1144,7 +1202,7 @@ def intradayDF(symbol, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     val = intraday(symbol, token, version)
     df = pd.DataFrame(val)
     _toDatetime(df)
@@ -1153,8 +1211,11 @@ def intradayDF(symbol, token='', version=''):
 
 
 def ipoToday(token='', version=''):
-    '''This returns a list of upcoming or today IPOs scheduled for the current and next month. The response is split into two structures:
-    rawData and viewData. rawData represents all available data for an IPO. viewData represents data structured for display to a user.
+    """
+    This returns a list of upcoming or today IPOs scheduled for the current and next month.
+    The response is split into two structures: rawData and viewData.
+    rawData represents all available data for an IPO.
+    viewData represents data structured for display to a user.
 
     https://iexcloud.io/docs/api/#ipo-calendar
     10am, 10:30am UTC daily
@@ -1165,13 +1226,16 @@ def ipoToday(token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     return _getJson('stock/market/today-ipos', token, version)
 
 
 def ipoTodayDF(token='', version=''):
-    '''This returns a list of upcoming or today IPOs scheduled for the current and next month. The response is split into two structures:
-    rawData and viewData. rawData represents all available data for an IPO. viewData represents data structured for display to a user.
+    """
+    This returns a list of upcoming or today IPOs scheduled for the current and next month.
+    The response is split into two structures: rawData and viewData.
+    rawData represents all available data for an IPO.
+    viewData represents data structured for display to a user.
 
     https://iexcloud.io/docs/api/#ipo-calendar
     10am, 10:30am UTC daily
@@ -1182,7 +1246,7 @@ def ipoTodayDF(token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     val = ipoToday(token, version)
     if val:
         df = pd.io.json.json_normalize(val, 'rawData')
@@ -1194,8 +1258,11 @@ def ipoTodayDF(token='', version=''):
 
 
 def ipoUpcoming(token='', version=''):
-    '''This returns a list of upcoming or today IPOs scheduled for the current and next month. The response is split into two structures:
-    rawData and viewData. rawData represents all available data for an IPO. viewData represents data structured for display to a user.
+    """
+    This returns a list of upcoming or today IPOs scheduled for the current and next month.
+    The response is split into two structures: rawData and viewData.
+    rawData represents all available data for an IPO.
+    viewData represents data structured for display to a user.
 
     https://iexcloud.io/docs/api/#ipo-calendar
     10am, 10:30am UTC daily
@@ -1206,13 +1273,16 @@ def ipoUpcoming(token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     return _getJson('stock/market/upcoming-ipos', token, version)
 
 
 def ipoUpcomingDF(token='', version=''):
-    '''This returns a list of upcoming or today IPOs scheduled for the current and next month. The response is split into two structures:
-    rawData and viewData. rawData represents all available data for an IPO. viewData represents data structured for display to a user.
+    """
+    This returns a list of upcoming or today IPOs scheduled for the current and next month.
+    The response is split into two structures: rawData and viewData.
+    rawData represents all available data for an IPO.
+    viewData represents data structured for display to a user.
 
     https://iexcloud.io/docs/api/#ipo-calendar
     10am, 10:30am UTC daily
@@ -1223,7 +1293,7 @@ def ipoUpcomingDF(token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     val = ipoUpcoming(token, version)
     if val:
         df = pd.io.json.json_normalize(val, 'rawData')
@@ -1235,7 +1305,8 @@ def ipoUpcomingDF(token='', version=''):
 
 
 def keyStats(symbol, token='', version=''):
-    '''Key Stats about company
+    """
+    Key Stats about company
 
     https://iexcloud.io/docs/api/#key-stats
     8am, 9am ET
@@ -1247,13 +1318,13 @@ def keyStats(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/stats', token, version)
 
 
 def _statsToDF(s):
-    '''internal'''
+    """internal"""
     if s:
         df = pd.io.json.json_normalize(s)
         _toDatetime(df)
@@ -1264,7 +1335,8 @@ def _statsToDF(s):
 
 
 def keyStatsDF(symbol, token='', version=''):
-    '''Key Stats about company
+    """
+    Key Stats about company
 
     https://iexcloud.io/docs/api/#key-stats
     8am, 9am ET
@@ -1276,14 +1348,15 @@ def keyStatsDF(symbol, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     s = keyStats(symbol, token, version)
     df = _statsToDF(s)
     return df
 
 
 def largestTrades(symbol, token='', version=''):
-    '''This returns 15 minute delayed, last sale eligible trades.
+    """
+    This returns 15 minute delayed, last sale eligible trades.
 
     https://iexcloud.io/docs/api/#largest-trades
     9:30-4pm ET M-F during regular market hours
@@ -1295,13 +1368,14 @@ def largestTrades(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/largest-trades', token, version)
 
 
 def largestTradesDF(symbol, token='', version=''):
-    '''This returns 15 minute delayed, last sale eligible trades.
+    """
+    This returns 15 minute delayed, last sale eligible trades.
 
     https://iexcloud.io/docs/api/#largest-trades
     9:30-4pm ET M-F during regular market hours
@@ -1313,7 +1387,7 @@ def largestTradesDF(symbol, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     df = pd.DataFrame(largestTrades(symbol, token, version))
     _toDatetime(df)
     _reindex(df, 'time')
@@ -1321,8 +1395,8 @@ def largestTradesDF(symbol, token='', version=''):
 
 
 def list(option='mostactive', token='', version=''):
-    '''Returns an array of quotes for the top 10 symbols in a specified list.
-
+    """
+    Returns an array of quotes for the top 10 symbols in a specified list.
 
     https://iexcloud.io/docs/api/#list
     Updated intraday
@@ -1334,15 +1408,15 @@ def list(option='mostactive', token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     if option not in _LIST_OPTIONS:
         raise PyEXception('Option must be in %s' % str(_LIST_OPTIONS))
     return _getJson('stock/market/list/' + option, token, version)
 
 
 def listDF(option='mostactive', token='', version=''):
-    '''Returns an array of quotes for the top 10 symbols in a specified list.
-
+    """
+    Returns an array of quotes for the top 10 symbols in a specified list.
 
     https://iexcloud.io/docs/api/#list
     Updated intraday
@@ -1354,7 +1428,7 @@ def listDF(option='mostactive', token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     df = pd.DataFrame(list(option, token, version))
     _toDatetime(df)
     _reindex(df, 'symbol')
@@ -1362,7 +1436,8 @@ def listDF(option='mostactive', token='', version=''):
 
 
 def logo(symbol, token='', version=''):
-    '''This is a helper function, but the google APIs url is standardized.
+    """
+    This is a helper function, but the google APIs url is standardized.
 
     https://iexcloud.io/docs/api/#logo
     8am UTC daily
@@ -1374,13 +1449,14 @@ def logo(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/logo', token, version)
 
 
 def logoPNG(symbol, token='', version=''):
-    '''This is a helper function, but the google APIs url is standardized.
+    """
+    This is a helper function, but the google APIs url is standardized.
 
     https://iexcloud.io/docs/api/#logo
     8am UTC daily
@@ -1392,14 +1468,15 @@ def logoPNG(symbol, token='', version=''):
 
     Returns:
         image: result as png
-    '''
+    """
     _raiseIfNotStr(symbol)
     response = requests.get(logo(symbol, token, version)['url'])
     return ImageP.open(BytesIO(response.content))
 
 
 def logoNotebook(symbol, token='', version=''):
-    '''This is a helper function, but the google APIs url is standardized.
+    """
+    This is a helper function, but the google APIs url is standardized.
 
     https://iexcloud.io/docs/api/#logo
     8am UTC daily
@@ -1411,14 +1488,15 @@ def logoNotebook(symbol, token='', version=''):
 
     Returns:
         image: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     url = logo(symbol, token, version)['url']
     return ImageI(url=url)
 
 
 def marketVolume(token='', version=''):
-    '''This endpoint returns real time traded volume on U.S. markets.
+    """
+    This endpoint returns real time traded volume on U.S. markets.
 
     https://iexcloud.io/docs/api/#market-volume-u-s
     7:45am-5:15pm ET Mon-Fri
@@ -1429,12 +1507,13 @@ def marketVolume(token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     return _getJson('market/', token, version)
 
 
 def marketVolumeDF(token='', version=''):
-    '''This endpoint returns real time traded volume on U.S. markets.
+    """
+    This endpoint returns real time traded volume on U.S. markets.
 
     https://iexcloud.io/docs/api/#market-volume-u-s
     7:45am-5:15pm ET Mon-Fri
@@ -1445,14 +1524,15 @@ def marketVolumeDF(token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     df = pd.DataFrame(marketVolume())
     _toDatetime(df, cols=[], tcols=['lastUpdated'])
     return df
 
 
 def news(symbol, count=10, token='', version=''):
-    '''News about company
+    """
+    News about company
 
     https://iexcloud.io/docs/api/#news
     Continuous
@@ -1465,13 +1545,13 @@ def news(symbol, count=10, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/news/last/' + str(count), token, version)
 
 
 def _newsToDF(n):
-    '''internal'''
+    """internal"""
     df = pd.DataFrame(n)
     _toDatetime(df, cols=[], tcols=['datetime'])
     _reindex(df, 'datetime')
@@ -1479,7 +1559,8 @@ def _newsToDF(n):
 
 
 def newsDF(symbol, count=10, token='', version=''):
-    '''News about company
+    """
+    News about company
 
     https://iexcloud.io/docs/api/#news
     Continuous
@@ -1492,14 +1573,15 @@ def newsDF(symbol, count=10, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     n = news(symbol, count, token, version)
     df = _newsToDF(n)
     return df
 
 
 def marketNews(count=10, token='', version=''):
-    '''News about market
+    """
+    News about market
 
     https://iexcloud.io/docs/api/#news
     Continuous
@@ -1511,12 +1593,13 @@ def marketNews(count=10, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     return _getJson('stock/market/news/last/' + str(count), token, version)
 
 
 def marketNewsDF(count=10, token='', version=''):
-    '''News about market
+    """
+    News about market
 
     https://iexcloud.io/docs/api/#news
     Continuous
@@ -1528,7 +1611,7 @@ def marketNewsDF(count=10, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     df = pd.DataFrame(marketNews(count, token, version))
     _toDatetime(df)
     _reindex(df, 'datetime')
@@ -1536,7 +1619,8 @@ def marketNewsDF(count=10, token='', version=''):
 
 
 def ohlc(symbol, token='', version=''):
-    '''Returns the official open and close for a give symbol.
+    """
+    Returns the official open and close for a give symbol.
 
     https://iexcloud.io/docs/api/#news
     9:30am-5pm ET Mon-Fri
@@ -1548,13 +1632,14 @@ def ohlc(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/ohlc', token, version)
 
 
 def ohlcDF(symbol, token='', version=''):
-    '''Returns the official open and close for a give symbol.
+    """
+    Returns the official open and close for a give symbol.
 
     https://iexcloud.io/docs/api/#news
     9:30am-5pm ET Mon-Fri
@@ -1566,7 +1651,7 @@ def ohlcDF(symbol, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     o = ohlc(symbol, token, version)
     if o:
         df = pd.io.json.json_normalize(o)
@@ -1577,7 +1662,8 @@ def ohlcDF(symbol, token='', version=''):
 
 
 def marketOhlc(token='', version=''):
-    '''Returns the official open and close for whole market.
+    """
+    Returns the official open and close for whole market.
 
     https://iexcloud.io/docs/api/#news
     9:30am-5pm ET Mon-Fri
@@ -1588,12 +1674,13 @@ def marketOhlc(token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     return _getJson('stock/market/ohlc', token, version)
 
 
 def marketOhlcDF(token='', version=''):
-    '''Returns the official open and close for whole market.
+    """
+    Returns the official open and close for whole market.
 
     https://iexcloud.io/docs/api/#news
     9:30am-5pm ET Mon-Fri
@@ -1604,7 +1691,7 @@ def marketOhlcDF(token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     x = marketOhlc(token, version)
     data = []
     for key in x:
@@ -1617,7 +1704,8 @@ def marketOhlcDF(token='', version=''):
 
 
 def optionExpirations(symbol, token='', version=''):
-    '''Returns end of day options data
+    """
+    Returns end of day options data
 
     https://iexcloud.io/docs/api/#options
     9:30am-5pm ET Mon-Fri
@@ -1629,13 +1717,14 @@ def optionExpirations(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/options', token, version)
 
 
 def options(symbol, expiration, side='', token='', version=''):
-    '''Returns end of day options data
+    """
+    Returns end of day options data
 
     https://iexcloud.io/docs/api/#options
     9:30am-5pm ET Mon-Fri
@@ -1649,15 +1738,19 @@ def options(symbol, expiration, side='', token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     if side:
-        return _getJson('stock/{symbol}/options/{expiration}/{side}'.format(symbol=symbol, expiration=expiration, side=side), token, version)
-    return _getJson('stock/{symbol}/options/{expiration}/'.format(symbol=symbol, expiration=expiration, side=side), token, version)
+        return _getJson(
+            'stock/{symbol}/options/{expiration}/{side}'.format(symbol=symbol, expiration=expiration, side=side), token,
+            version)
+    return _getJson('stock/{symbol}/options/{expiration}/'.format(symbol=symbol, expiration=expiration, side=side),
+                    token, version)
 
 
 def optionsDF(symbol, expiration, side='', token='', version=''):
-    '''Returns end of day options data
+    """
+    Returns end of day options data
 
     https://iexcloud.io/docs/api/#options
     9:30am-5pm ET Mon-Fri
@@ -1671,7 +1764,7 @@ def optionsDF(symbol, expiration, side='', token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     p = options(symbol, expiration, side, token, version)
     df = pd.DataFrame(p)
     _toDatetime(df)
@@ -1679,7 +1772,8 @@ def optionsDF(symbol, expiration, side='', token='', version=''):
 
 
 def peers(symbol, token='', version=''):
-    '''Peers of ticker
+    """
+    Peers of ticker
 
     https://iexcloud.io/docs/api/#peers
     8am UTC daily
@@ -1691,13 +1785,13 @@ def peers(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/peers', token, version)
 
 
 def _peersToDF(p):
-    '''internal'''
+    """internal"""
     df = pd.DataFrame(p, columns=['symbol'])
     _toDatetime(df)
     _reindex(df, 'symbol')
@@ -1706,7 +1800,8 @@ def _peersToDF(p):
 
 
 def peersDF(symbol, token='', version=''):
-    '''Peers of ticker
+    """
+    Peers of ticker
 
     https://iexcloud.io/docs/api/#peers
     8am UTC daily
@@ -1718,14 +1813,15 @@ def peersDF(symbol, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     p = peers(symbol, token, version)
     df = _peersToDF(p)
     return df
 
 
 def yesterday(symbol, token='', version=''):
-    '''This returns previous day adjusted price data for one or more stocks
+    """
+    This returns previous day adjusted price data for one or more stocks
 
     https://iexcloud.io/docs/api/#previous-day-prices
     Available after 4am ET Tue-Sat
@@ -1737,13 +1833,14 @@ def yesterday(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/previous', token, version)
 
 
 def yesterdayDF(symbol, token='', version=''):
-    '''This returns previous day adjusted price data for one or more stocks
+    """
+    This returns previous day adjusted price data for one or more stocks
 
     https://iexcloud.io/docs/api/#previous-day-prices
     Available after 4am ET Tue-Sat
@@ -1755,7 +1852,7 @@ def yesterdayDF(symbol, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     y = yesterday(symbol, token, version)
     if y:
         df = pd.io.json.json_normalize(y)
@@ -1767,7 +1864,8 @@ def yesterdayDF(symbol, token='', version=''):
 
 
 def marketYesterday(token='', version=''):
-    '''This returns previous day adjusted price data for whole market
+    """
+    This returns previous day adjusted price data for whole market
 
     https://iexcloud.io/docs/api/#previous-day-prices
     Available after 4am ET Tue-Sat
@@ -1779,12 +1877,13 @@ def marketYesterday(token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     return _getJson('stock/market/previous', token, version)
 
 
 def marketYesterdayDF(token='', version=''):
-    '''This returns previous day adjusted price data for whole market
+    """
+    This returns previous day adjusted price data for whole market
 
     https://iexcloud.io/docs/api/#previous-day-prices
     Available after 4am ET Tue-Sat
@@ -1796,7 +1895,7 @@ def marketYesterdayDF(token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     x = marketYesterday(token, version)
     data = []
     for key in x:
@@ -1809,7 +1908,8 @@ def marketYesterdayDF(token='', version=''):
 
 
 def price(symbol, token='', version=''):
-    '''Price of ticker
+    """
+    Price of ticker
 
     https://iexcloud.io/docs/api/#price
     4:30am-8pm ET Mon-Fri
@@ -1821,13 +1921,14 @@ def price(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/price', token, version)
 
 
 def priceDF(symbol, token='', version=''):
-    '''Price of ticker
+    """
+    Price of ticker
 
     https://iexcloud.io/docs/api/#price
     4:30am-8pm ET Mon-Fri
@@ -1839,14 +1940,15 @@ def priceDF(symbol, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     df = pd.io.json.json_normalize({'price': price(symbol, token, version)})
     _toDatetime(df)
     return df
 
 
 def priceTarget(symbol, token='', version=''):
-    '''Provides the latest avg, high, and low analyst price target for a symbol.
+    """
+    Provides the latest avg, high, and low analyst price target for a symbol.
 
     https://iexcloud.io/docs/api/#price-target
     Updates at 10am, 11am, 12pm UTC every day
@@ -1858,13 +1960,14 @@ def priceTarget(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/price-target', token, version)
 
 
 def priceTargetDF(symbol, token='', version=''):
-    '''Provides the latest avg, high, and low analyst price target for a symbol.
+    """
+    Provides the latest avg, high, and low analyst price target for a symbol.
 
     https://iexcloud.io/docs/api/#price-target
     Updates at 10am, 11am, 12pm UTC every day
@@ -1876,14 +1979,15 @@ def priceTargetDF(symbol, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     df = pd.io.json.json_normalize(priceTarget(symbol, token, version))
     _toDatetime(df)
     return df
 
 
 def quote(symbol, token='', version=''):
-    '''Get quote for ticker
+    """
+    Get quote for ticker
 
     https://iexcloud.io/docs/api/#quote
     4:30am-8pm ET Mon-Fri
@@ -1896,13 +2000,14 @@ def quote(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/quote', token, version)
 
 
 def quoteDF(symbol, token='', version=''):
-    '''Get quote for ticker
+    """
+    Get quote for ticker
 
     https://iexcloud.io/docs/api/#quote
     4:30am-8pm ET Mon-Fri
@@ -1915,7 +2020,7 @@ def quoteDF(symbol, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     q = quote(symbol, token, version)
     if q:
         df = pd.io.json.json_normalize(q)
@@ -1927,7 +2032,8 @@ def quoteDF(symbol, token='', version=''):
 
 
 def relevant(symbol, token='', version=''):
-    '''Same as peers
+    """
+    Same as peers
 
     https://iexcloud.io/docs/api/#relevant
     Args:
@@ -1937,13 +2043,14 @@ def relevant(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/relevant', token, version)
 
 
 def relevantDF(symbol, token='', version=''):
-    '''Same as peers
+    """
+    Same as peers
 
     https://iexcloud.io/docs/api/#relevant
     Args:
@@ -1953,14 +2060,16 @@ def relevantDF(symbol, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     df = pd.DataFrame(relevant(symbol, token, version))
     _toDatetime(df)
     return df
 
 
 def sectorPerformance(token='', version=''):
-    '''This returns an array of each sector and performance for the current trading day. Performance is based on each sector ETF.
+    """
+    This returns an array of each sector and performance for the current trading day.
+    Performance is based on each sector ETF.
 
     https://iexcloud.io/docs/api/#sector-performance
     8am-5pm ET Mon-Fri
@@ -1971,12 +2080,14 @@ def sectorPerformance(token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     return _getJson('stock/market/sector-performance', token, version)
 
 
 def sectorPerformanceDF(token='', version=''):
-    '''This returns an array of each sector and performance for the current trading day. Performance is based on each sector ETF.
+    """
+    This returns an array of each sector and performance for the current trading day.
+    Performance is based on each sector ETF.
 
     https://iexcloud.io/docs/api/#sector-performance
     8am-5pm ET Mon-Fri
@@ -1987,7 +2098,7 @@ def sectorPerformanceDF(token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     df = pd.DataFrame(sectorPerformance(token, version))
     _toDatetime(df, cols=[], tcols=['lastUpdated'])
     _reindex(df, 'name')
@@ -1995,7 +2106,8 @@ def sectorPerformanceDF(token='', version=''):
 
 
 def splits(symbol, timeframe='ytd', token='', version=''):
-    '''Stock split history
+    """
+    Stock split history
 
     https://iexcloud.io/docs/api/#splits
     Updated at 9am UTC every day
@@ -2007,7 +2119,7 @@ def splits(symbol, timeframe='ytd', token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     if timeframe not in _TIMEFRAME_DIVSPLIT:
         raise PyEXception('Range must be in %s' % str(_TIMEFRAME_DIVSPLIT))
@@ -2015,7 +2127,7 @@ def splits(symbol, timeframe='ytd', token='', version=''):
 
 
 def _splitsToDF(s):
-    '''internal'''
+    """internal"""
     df = pd.DataFrame(s)
     _toDatetime(df)
     _reindex(df, 'exDate')
@@ -2023,7 +2135,8 @@ def _splitsToDF(s):
 
 
 def splitsDF(symbol, timeframe='ytd', token='', version=''):
-    '''Stock split history
+    """
+    Stock split history
 
     https://iexcloud.io/docs/api/#splits
     Updated at 9am UTC every day
@@ -2035,15 +2148,17 @@ def splitsDF(symbol, timeframe='ytd', token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     s = splits(symbol, timeframe, token, version)
     df = _splitsToDF(s)
     return df
 
 
 def volumeByVenue(symbol, token='', version=''):
-    '''This returns 15 minute delayed and 30 day average consolidated volume percentage of a stock, by market.
-    This call will always return 13 values, and will be sorted in ascending order by current day trading volume percentage.
+    """
+    This returns 15 minute delayed and 30 day average consolidated volume percentage of a stock, by market.
+    This call will always return 13 values, and will be sorted in ascending
+    order by current day trading volume percentage.
 
     https://iexcloud.io/docs/api/#volume-by-venue
     Updated during regular market hours 9:30am-4pm ET
@@ -2056,14 +2171,16 @@ def volumeByVenue(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/' + symbol + '/volume-by-venue', token, version)
 
 
 def volumeByVenueDF(symbol, token='', version=''):
-    '''This returns 15 minute delayed and 30 day average consolidated volume percentage of a stock, by market.
-    This call will always return 13 values, and will be sorted in ascending order by current day trading volume percentage.
+    """
+    This returns 15 minute delayed and 30 day average consolidated volume percentage of a stock, by market.
+    This call will always return 13 values, and will be sorted in ascending
+    order by current day trading volume percentage.
 
     https://iexcloud.io/docs/api/#volume-by-venue
     Updated during regular market hours 9:30am-4pm ET
@@ -2076,7 +2193,7 @@ def volumeByVenueDF(symbol, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     df = pd.DataFrame(volumeByVenue(symbol, token, version))
     _toDatetime(df)
     _reindex(df, 'venue')
@@ -2084,7 +2201,10 @@ def volumeByVenueDF(symbol, token='', version=''):
 
 
 def threshold(date=None, token='', version=''):
-    '''The following are IEX-listed securities that have an aggregate fail to deliver position for five consecutive settlement days at a registered clearing agency, totaling 10,000 shares or more and equal to at least 0.5% of the issuer’s total shares outstanding (i.e., “threshold securities”).
+    """
+    The following are IEX-listed securities that have an aggregate fail to deliver position for
+    five consecutive settlement days at a registered clearing agency, totaling 10,000 shares or more
+    and equal to at least 0.5% of the issuer’s total shares outstanding (i.e., “threshold securities”).
     The report data will be published to the IEX website daily at 8:30 p.m. ET with data for that trading day.
 
     https://iexcloud.io/docs/api/#listed-regulation-sho-threshold-securities-list-in-dev
@@ -2096,7 +2216,7 @@ def threshold(date=None, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     if date:
         date = _strOrDate(date)
         return _getJson('stock/market/threshold-securities/' + date, token, version)
@@ -2104,7 +2224,10 @@ def threshold(date=None, token='', version=''):
 
 
 def thresholdDF(date=None, token='', version=''):
-    '''The following are IEX-listed securities that have an aggregate fail to deliver position for five consecutive settlement days at a registered clearing agency, totaling 10,000 shares or more and equal to at least 0.5% of the issuer’s total shares outstanding (i.e., “threshold securities”).
+    """
+    The following are IEX-listed securities that have an aggregate fail to deliver position for
+    five consecutive settlement days at a registered clearing agency, totaling 10,000 shares or more
+    and equal to at least 0.5% of the issuer’s total shares outstanding (i.e., “threshold securities”).
     The report data will be published to the IEX website daily at 8:30 p.m. ET with data for that trading day.
 
     https://iexcloud.io/docs/api/#listed-regulation-sho-threshold-securities-list-in-dev
@@ -2116,14 +2239,16 @@ def thresholdDF(date=None, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     df = pd.DataFrame(threshold(date, token, version))
     _toDatetime(df)
     return df
 
 
 def shortInterest(symbol, date=None, token='', version=''):
-    '''The consolidated market short interest positions in all IEX-listed securities are included in the IEX Short Interest Report.
+    """
+    The consolidated market short interest positions in all IEX-listed securities
+    are included in the IEX Short Interest Report.
 
     The report data will be published daily at 4:00pm ET.
 
@@ -2137,7 +2262,7 @@ def shortInterest(symbol, date=None, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     if date:
         date = _strOrDate(date)
@@ -2146,7 +2271,9 @@ def shortInterest(symbol, date=None, token='', version=''):
 
 
 def shortInterestDF(symbol, date=None, token='', version=''):
-    '''The consolidated market short interest positions in all IEX-listed securities are included in the IEX Short Interest Report.
+    """
+    The consolidated market short interest positions in all IEX-listed securities
+    are included in the IEX Short Interest Report.
 
     The report data will be published daily at 4:00pm ET.
 
@@ -2160,14 +2287,16 @@ def shortInterestDF(symbol, date=None, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     df = pd.DataFrame(shortInterest(symbol, date, token, version))
     _toDatetime(df)
     return df
 
 
 def marketShortInterest(date=None, token='', version=''):
-    '''The consolidated market short interest positions in all IEX-listed securities are included in the IEX Short Interest Report.
+    """
+    The consolidated market short interest positions in all IEX-listed securities
+    are included in the IEX Short Interest Report.
 
     The report data will be published daily at 4:00pm ET.
 
@@ -2180,7 +2309,7 @@ def marketShortInterest(date=None, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     if date:
         date = _strOrDate(date)
         return _getJson('stock/market/short-interest/' + date, token, version)
@@ -2188,7 +2317,9 @@ def marketShortInterest(date=None, token='', version=''):
 
 
 def marketShortInterestDF(date=None, token='', version=''):
-    '''The consolidated market short interest positions in all IEX-listed securities are included in the IEX Short Interest Report.
+    """
+    The consolidated market short interest positions in all IEX-listed securities
+    are included in the IEX Short Interest Report.
 
     The report data will be published daily at 4:00pm ET.
 
@@ -2201,7 +2332,7 @@ def marketShortInterestDF(date=None, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     df = pd.DataFrame(marketShortInterest(date, token, version))
     _toDatetime(df)
     return df

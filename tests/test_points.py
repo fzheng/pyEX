@@ -1,6 +1,10 @@
+#!/usr/bin/env python3
+
 # for Coverage
 import time
+
 from mock import patch, MagicMock
+
 SYMBOL = 'aapl'
 
 

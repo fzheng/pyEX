@@ -1,7 +1,9 @@
 deprecation>=2.0.6
 ipython>=7.2.0
+mock>=3.0.5
 Pillow>=5.3.0
 pandas>=0.22
+perspective-python>=0.1.9
 requests>=2.21.0
 socketIO-client-nexus>=0.7.6
 sseclient>=0.0.22

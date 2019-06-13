@@ -1,9 +1,14 @@
+#!/usr/bin/env python3
+
 import pandas as pd
+
 from .common import _getJson, _raiseIfNotStr, _strOrDate, _reindex, _toDatetime
 
 
 def crypto(token='', version=''):
-    '''This will return an array of quotes for all Cryptocurrencies supported by the IEX API. Each element is a standard quote object with four additional keys.
+    """
+    This will return an array of quotes for all Cryptocurrencies supported by the IEX API.
+    Each element is a standard quote object with four additional keys.
 
     https://iexcloud.io/docs/api/#crypto
 
@@ -13,12 +18,14 @@ def crypto(token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     return _getJson('stock/market/crypto/', token, version)
 
 
 def cryptoDF(token='', version=''):
-    '''This will return an array of quotes for all Cryptocurrencies supported by the IEX API. Each element is a standard quote object with four additional keys.
+    """
+    This will return an array of quotes for all Cryptocurrencies supported by the IEX API.
+    Each element is a standard quote object with four additional keys.
 
     https://iexcloud.io/docs/api/#crypto
 
@@ -28,7 +35,7 @@ def cryptoDF(token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     df = pd.DataFrame(crypto(token, version))
     _toDatetime(df)
     _reindex(df, 'symbol')
@@ -36,7 +43,9 @@ def cryptoDF(token='', version=''):
 
 
 def sentiment(symbol, type='daily', date=None, token='', version=''):
-    '''This endpoint provides social sentiment data from StockTwits. Data can be viewed as a daily value, or by minute for a given date.
+    """
+    This endpoint provides social sentiment data from StockTwits.
+    Data can be viewed as a daily value, or by minute for a given date.
 
     https://iexcloud.io/docs/api/#social-sentiment
     Continuous
@@ -50,16 +59,19 @@ def sentiment(symbol, type='daily', date=None, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     if date:
         date = _strOrDate(date)
-        return _getJson('stock/{symbol}/sentiment/{type}/{date}'.format(symbol=symbol, type=type, date=date), token, version)
+        return _getJson('stock/{symbol}/sentiment/{type}/{date}'.format(symbol=symbol, type=type, date=date), token,
+                        version)
     return _getJson('stock/{symbol}/sentiment/{type}/'.format(symbol=symbol, type=type), token, version)
 
 
 def sentimentDF(symbol, type='daily', date=None, token='', version=''):
-    '''This endpoint provides social sentiment data from StockTwits. Data can be viewed as a daily value, or by minute for a given date.
+    """
+    This endpoint provides social sentiment data from StockTwits.
+    Data can be viewed as a daily value, or by minute for a given date.
 
     https://iexcloud.io/docs/api/#social-sentiment
     Continuous
@@ -73,7 +85,7 @@ def sentimentDF(symbol, type='daily', date=None, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     ret = sentiment(symbol, type, date, token, version)
     if type == 'daily':
         ret = [ret]
@@ -83,7 +95,8 @@ def sentimentDF(symbol, type='daily', date=None, token='', version=''):
 
 
 def ceoCompensation(symbol, token='', version=''):
-    '''This endpoint provides CEO compensation for a company by symbol.
+    """
+    This endpoint provides CEO compensation for a company by symbol.
 
     https://iexcloud.io/docs/api/#ceo-compensation
     1am daily
@@ -95,13 +108,14 @@ def ceoCompensation(symbol, token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     return _getJson('stock/{symbol}/ceo-compensation'.format(symbol=symbol), token, version)
 
 
 def ceoCompensationDF(symbol, token='', version=''):
-    '''This endpoint provides CEO compensation for a company by symbol.
+    """
+    This endpoint provides CEO compensation for a company by symbol.
 
     https://iexcloud.io/docs/api/#ceo-compensation
     1am daily
@@ -113,7 +127,7 @@ def ceoCompensationDF(symbol, token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     ret = ceoCompensation(symbol, token, version)
     df = pd.io.json.json_normalize(ret)
     _toDatetime(df)

@@ -1,5 +1,7 @@
+#!/usr/bin/env python3
+
 # for Coverage
-from mock import patch, MagicMock
+from mock import patch
 
 
 class TestAll:

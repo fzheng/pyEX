@@ -1,8 +1,10 @@
 #!/bin/env python3
+import argparse
 import os
 import os.path
-import argparse
+
 from jinja2 import Environment, BaseLoader
+
 abspath = os.path.abspath
 join = os.path.join
 
@@ -32,7 +34,7 @@ def main(version, repourl):
         fp.write(template.render(
             VERSION=version,
             REPO_URL=repourl
-            ) + '\n')
+        ) + '\n')
 
     # write out _version.py
     with open(VERSION_OUT, "w") as fp:
@@ -40,7 +42,7 @@ def main(version, repourl):
         fp.write(GENERATED_HEADER)
         fp.write(template.render(
             VERSION=version
-            ) + '\n')
+        ) + '\n')
 
     # write out docs/conf.py
     with open(DOCS_CONF_OUT, "w") as fp:
@@ -48,12 +50,14 @@ def main(version, repourl):
         fp.write(GENERATED_HEADER)
         fp.write(template.render(
             VERSION=version
-            ) + '\n')
+        ) + '\n')
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process some integers.')
     requiredNamed = parser.add_argument_group('required named arguments')
-    requiredNamed.add_argument('--version', type=str, required=True, help='Version number to generate (format Major.Minor.Micro)')
+    requiredNamed.add_argument('--version', type=str, required=True,
+                               help='Version number to generate (format Major.Minor.Micro)')
     requiredNamed.add_argument('--repourl', type=str, required=True, help='Github repository')
     args = parser.parse_args()
     main(args.version, args.repourl)

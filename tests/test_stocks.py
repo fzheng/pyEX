@@ -1,6 +1,10 @@
+#!/usr/bin/env python3
+
 # for Coverage
 import time
+
 from mock import patch, MagicMock
+
 SYMBOL = 'aapl'
 
 
@@ -164,11 +168,11 @@ class TestAll:
             mock.return_value = MagicMock()
             mock.return_value.status_code = 200
             mock.return_value.json = MagicMock(return_value={
-              "quote": {'symbol': SYMBOL},
-              "bids": [],
-              "asks": [],
-              "trades": [],
-              "systemEvent": {},
+                "quote": {'symbol': SYMBOL},
+                "bids": [],
+                "asks": [],
+                "trades": [],
+                "systemEvent": {},
             })
 
             bookDF(SYMBOL)

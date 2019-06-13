@@ -1,10 +1,15 @@
+#!/usr/bin/env python3
+
 import pandas as pd
+
 from .common import _getJson, _raiseIfNotStr, _toDatetime
 
 
 def points(symbol='market', key='', token='', version=''):
-    '''Data points are available per symbol and return individual plain text values.
-    Retrieving individual data points is useful for Excel and Google Sheet users, and applications where a single, lightweight value is needed.
+    """
+    Data points are available per symbol and return individual plain text values.
+    Retrieving individual data points is useful for Excel and Google Sheet users,
+    and applications where a single, lightweight value is needed.
     We also provide update times for some endpoints which allow you to call an endpoint only once it has new data.
 
 
@@ -18,7 +23,7 @@ def points(symbol='market', key='', token='', version=''):
 
     Returns:
         dict: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     if key:
         return _getJson('data-points/{symbol}/{key}'.format(symbol=symbol, key=key), token, version)
@@ -26,8 +31,10 @@ def points(symbol='market', key='', token='', version=''):
 
 
 def pointsDF(symbol='market', key='', token='', version=''):
-    '''Data points are available per symbol and return individual plain text values.
-    Retrieving individual data points is useful for Excel and Google Sheet users, and applications where a single, lightweight value is needed.
+    """
+    Data points are available per symbol and return individual plain text values.
+    Retrieving individual data points is useful for Excel and Google Sheet users,
+    and applications where a single, lightweight value is needed.
     We also provide update times for some endpoints which allow you to call an endpoint only once it has new data.
 
 
@@ -41,7 +48,7 @@ def pointsDF(symbol='market', key='', token='', version=''):
 
     Returns:
         DataFrame: result
-    '''
+    """
     _raiseIfNotStr(symbol)
     if key:
         val = points(symbol, key, token, version)

@@ -1,5 +1,8 @@
+#!/usr/bin/env python3
+
 import pandas as pd
 from deprecation import deprecated
+
 from .common import _getJson, _toDatetime
 
 
