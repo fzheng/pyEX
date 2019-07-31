@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+# -*- coding: utf-8 -*-
 from enum import Enum
 
 from ..common import _strCommaSeparatedString, _streamSSE, _SSE_URL_PREFIX, _SSE_URL_PREFIX_ALL, _SSE_DEEP_URL_PREFIX, \

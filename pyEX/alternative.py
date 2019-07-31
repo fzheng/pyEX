@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 
+# -*- coding: utf-8 -*-
 import pandas as pd
 
 from .common import _getJson, _raiseIfNotStr, _strOrDate, _reindex, _toDatetime
 
 
-def crypto(token='', version=''):
+def crypto(token='', version='', filter=''):
     """
     This will return an array of quotes for all Cryptocurrencies supported by the IEX API.
     Each element is a standard quote object with four additional keys.
@@ -15,14 +16,15 @@ def crypto(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
-    return _getJson('stock/market/crypto/', token, version)
+    return _getJson('stock/market/crypto/', token, version, filter)
 
 
-def cryptoDF(token='', version=''):
+def cryptoDF(token='', version='', filter=''):
     """
     This will return an array of quotes for all Cryptocurrencies supported by the IEX API.
     Each element is a standard quote object with four additional keys.
@@ -32,17 +34,18 @@ def cryptoDF(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    df = pd.DataFrame(crypto(token, version))
+    df = pd.DataFrame(crypto(token, version, filter))
     _toDatetime(df)
     _reindex(df, 'symbol')
     return df
 
 
-def sentiment(symbol, type='daily', date=None, token='', version=''):
+def sentiment(symbol, type='daily', date=None, token='', version='', filter=''):
     """
     This endpoint provides social sentiment data from StockTwits.
     Data can be viewed as a daily value, or by minute for a given date.
@@ -56,6 +59,7 @@ def sentiment(symbol, type='daily', date=None, token='', version=''):
         date (string); date in YYYYMMDD or datetime
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
@@ -64,11 +68,11 @@ def sentiment(symbol, type='daily', date=None, token='', version=''):
     if date:
         date = _strOrDate(date)
         return _getJson('stock/{symbol}/sentiment/{type}/{date}'.format(symbol=symbol, type=type, date=date), token,
-                        version)
-    return _getJson('stock/{symbol}/sentiment/{type}/'.format(symbol=symbol, type=type), token, version)
+                        version, filter)
+    return _getJson('stock/{symbol}/sentiment/{type}/'.format(symbol=symbol, type=type), token, version, filter)
 
 
-def sentimentDF(symbol, type='daily', date=None, token='', version=''):
+def sentimentDF(symbol, type='daily', date=None, token='', version='', filter=''):
     """
     This endpoint provides social sentiment data from StockTwits.
     Data can be viewed as a daily value, or by minute for a given date.
@@ -82,11 +86,12 @@ def sentimentDF(symbol, type='daily', date=None, token='', version=''):
         date (string); date in YYYYMMDD or datetime
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    ret = sentiment(symbol, type, date, token, version)
+    ret = sentiment(symbol, type, date, token, version, filter)
     if type == 'daily':
         ret = [ret]
     df = pd.DataFrame(ret)
@@ -94,7 +99,7 @@ def sentimentDF(symbol, type='daily', date=None, token='', version=''):
     return df
 
 
-def ceoCompensation(symbol, token='', version=''):
+def ceoCompensation(symbol, token='', version='', filter=''):
     """
     This endpoint provides CEO compensation for a company by symbol.
 
@@ -105,15 +110,16 @@ def ceoCompensation(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/{symbol}/ceo-compensation'.format(symbol=symbol), token, version)
+    return _getJson('stock/{symbol}/ceo-compensation'.format(symbol=symbol), token, version, filter)
 
 
-def ceoCompensationDF(symbol, token='', version=''):
+def ceoCompensationDF(symbol, token='', version='', filter=''):
     """
     This endpoint provides CEO compensation for a company by symbol.
 
@@ -124,11 +130,12 @@ def ceoCompensationDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    ret = ceoCompensation(symbol, token, version)
+    ret = ceoCompensation(symbol, token, version, filter)
     df = pd.io.json.json_normalize(ret)
     _toDatetime(df)
     return df

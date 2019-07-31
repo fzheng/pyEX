@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+# -*- coding: utf-8 -*-
 import itertools
 from io import BytesIO
 from multiprocessing.pool import ThreadPool
@@ -14,7 +15,7 @@ from .common import _TIMEFRAME_CHART, _TIMEFRAME_DIVSPLIT, _LIST_OPTIONS, _COLLE
     PyEXception, _strOrDate, _reindex, _toDatetime, _BATCH_TYPES
 
 
-def advancedStats(symbol, token='', version=''):
+def advancedStats(symbol, token='', version='', filter=''):
     """
     Returns everything in key stats plus additional advanced stats such as EBITDA, ratios, key financial data, and more.
 
@@ -25,15 +26,16 @@ def advancedStats(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/advanced-stats', token, version)
+    return _getJson('stock/' + symbol + '/advanced-stats', token, version, filter)
 
 
-def advancedStatsDF(symbol, token='', version=''):
+def advancedStatsDF(symbol, token='', version='', filter=''):
     """
     Returns everything in key stats plus additional advanced stats such as EBITDA, ratios, key financial data, and more.
 
@@ -44,17 +46,18 @@ def advancedStatsDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    val = advancedStats(symbol, token, version)
+    val = advancedStats(symbol, token, version, filter)
     df = pd.io.json.json_normalize(val)
     _toDatetime(df)
     return df
 
 
-def balanceSheet(symbol, token='', version=''):
+def balanceSheet(symbol, token='', version='', filter=''):
     """
     Pulls balance sheet data. Available quarterly (4 quarters) and annually (4 years)
 
@@ -66,15 +69,16 @@ def balanceSheet(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/balance-sheet', token, version)
+    return _getJson('stock/' + symbol + '/balance-sheet', token, version, filter)
 
 
-def balanceSheetDF(symbol, token='', version=''):
+def balanceSheetDF(symbol, token='', version='', filter=''):
     """
     Pulls balance sheet data. Available quarterly (4 quarters) and annually (4 years)
 
@@ -86,18 +90,19 @@ def balanceSheetDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    val = balanceSheet(symbol, token, version)
+    val = balanceSheet(symbol, token, version, filter)
     df = pd.io.json.json_normalize(val, 'balancesheet', 'symbol')
     _toDatetime(df)
     _reindex(df, 'reportDate')
     return df
 
 
-def batch(symbols, fields=None, range_='1m', last=10, token='', version=''):
+def batch(symbols, fields=None, range_='1m', last=10, token='', version='', filter=''):
     """
     Batch several data requests into one invocation
 
@@ -111,6 +116,7 @@ def batch(symbols, fields=None, range_='1m', last=10, token='', version=''):
         last (int);
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: results in json
@@ -129,16 +135,17 @@ def batch(symbols, fields=None, range_='1m', last=10, token='', version=''):
 
     if isinstance(symbols, str):
         route = 'stock/{}/batch?types={}&range={}&last={}'.format(symbols, ','.join(fields), range_, last)
-        return _getJson(route, token, version)
+        return _getJson(route, token, version, filter)
 
     if len(symbols) > 100:
         raise PyEXception('IEX will only handle up to 100 symbols at a time!')
+
     route = 'stock/market/batch?symbols={}&types={}&range={}&last={}'.format(','.join(symbols), ','.join(fields),
                                                                              range_, last)
-    return _getJson(route, token, version)
+    return _getJson(route, token, version, filter)
 
 
-def batchDF(symbols, fields=None, range_='1m', last=10, token='', version=''):
+def batchDF(symbols, fields=None, range_='1m', last=10, token='', version='', filter=''):
     """
     Batch several data requests into one invocation
 
@@ -152,11 +159,12 @@ def batchDF(symbols, fields=None, range_='1m', last=10, token='', version=''):
         last (int);
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: results in json
     """
-    x = batch(symbols, fields, range_, last, token, version)
+    x = batch(symbols, fields, range_, last, token, version, filter)
 
     ret = {}
 
@@ -177,7 +185,7 @@ def batchDF(symbols, fields=None, range_='1m', last=10, token='', version=''):
     return ret
 
 
-def bulkBatch(symbols, fields=None, range_='1m', last=10, token='', version=''):
+def bulkBatch(symbols, fields=None, range_='1m', last=10, token='', version='', filter=''):
     """
     Optimized batch to fetch as much as possible at once
 
@@ -191,6 +199,7 @@ def bulkBatch(symbols, fields=None, range_='1m', last=10, token='', version=''):
         last (int);
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: results in json
@@ -204,7 +213,7 @@ def bulkBatch(symbols, fields=None, range_='1m', last=10, token='', version=''):
         raise PyEXception('Symbols must be of type list')
 
     for i in range(0, len(symbols), 99):
-        args.append((symbols[i:i + 99], fields, range_, last, token, version))
+        args.append((symbols[i:i + 99], fields, range_, last, token, version, filter))
 
     pool = ThreadPool(20)
     rets = pool.starmap(batch, args)
@@ -227,7 +236,7 @@ def bulkBatch(symbols, fields=None, range_='1m', last=10, token='', version=''):
     return ret
 
 
-def bulkBatchDF(symbols, fields=None, range_='1m', last=10, token='', version=''):
+def bulkBatchDF(symbols, fields=None, range_='1m', last=10, token='', version='', filter=''):
     """
     Optimized batch to fetch as much as possible at once
 
@@ -241,11 +250,12 @@ def bulkBatchDF(symbols, fields=None, range_='1m', last=10, token='', version=''
         last (int);
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: results in json
     """
-    dat = bulkBatch(symbols, fields, range_, last, token, version)
+    dat = bulkBatch(symbols, fields, range_, last, token, version, filter)
     ret = {}
     for symbol in dat:
         for field in dat[symbol]:
@@ -260,7 +270,7 @@ def bulkBatchDF(symbols, fields=None, range_='1m', last=10, token='', version=''
     return ret
 
 
-def book(symbol, token='', version=''):
+def book(symbol, token='', version='', filter=''):
     """
     Book data
 
@@ -271,12 +281,13 @@ def book(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/book', token, version)
+    return _getJson('stock/' + symbol + '/book', token, version, filter)
 
 
 def _bookToDF(b):
@@ -306,7 +317,7 @@ def _bookToDF(b):
     return df
 
 
-def bookDF(symbol, token='', version=''):
+def bookDF(symbol, token='', version='', filter=''):
     """
     Book data
 
@@ -317,16 +328,17 @@ def bookDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    x = book(symbol, token, version)
+    x = book(symbol, token, version, filter)
     df = _bookToDF(x)
     return df
 
 
-def cashFlow(symbol, token='', version=''):
+def cashFlow(symbol, token='', version='', filter=''):
     """
     Pulls cash flow data. Available quarterly (4 quarters) or annually (4 years).
 
@@ -338,15 +350,16 @@ def cashFlow(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/cash-flow', token, version)
+    return _getJson('stock/' + symbol + '/cash-flow', token, version, filter)
 
 
-def cashFlowDF(symbol, token='', version=''):
+def cashFlowDF(symbol, token='', version='', filter=''):
     """
     Pulls cash flow data. Available quarterly (4 quarters) or annually (4 years).
 
@@ -358,11 +371,12 @@ def cashFlowDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    val = cashFlow(symbol, token, version)
+    val = cashFlow(symbol, token, version, filter)
     df = pd.io.json.json_normalize(val, 'cashflow', 'symbol')
     _toDatetime(df)
     _reindex(df, 'reportDate')
@@ -370,7 +384,7 @@ def cashFlowDF(symbol, token='', version=''):
     return df
 
 
-def chart(symbol, timeframe='1m', date=None, token='', version=''):
+def chart(symbol, timeframe='1m', date=None, token='', version='', filter=''):
     """
     Historical price/volume data, daily and intraday
 
@@ -387,6 +401,7 @@ def chart(symbol, timeframe='1m', date=None, token='', version=''):
         date (datetime): date, if requesting intraday
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
@@ -395,11 +410,11 @@ def chart(symbol, timeframe='1m', date=None, token='', version=''):
     if timeframe is not None and timeframe != '1d':
         if timeframe not in _TIMEFRAME_CHART:
             raise PyEXception('Range must be in %s' % str(_TIMEFRAME_CHART))
-        return _getJson('stock/' + symbol + '/chart' + '/' + timeframe, token, version)
+        return _getJson('stock/' + symbol + '/chart' + '/' + timeframe, token, version, filter)
     if date:
         date = _strOrDate(date)
-        return _getJson('stock/' + symbol + '/chart' + '/date/' + date, token, version)
-    return _getJson('stock/' + symbol + '/chart', token, version)
+        return _getJson('stock/' + symbol + '/chart' + '/date/' + date, token, version, filter)
+    return _getJson('stock/' + symbol + '/chart', token, version, filter)
 
 
 def _chartToDF(c):
@@ -410,7 +425,7 @@ def _chartToDF(c):
     return df
 
 
-def chartDF(symbol, timeframe='1m', date=None, token='', version=''):
+def chartDF(symbol, timeframe='1m', date=None, token='', version='', filter=''):
     """
     Historical price/volume data, daily and intraday
 
@@ -427,11 +442,12 @@ def chartDF(symbol, timeframe='1m', date=None, token='', version=''):
         date (datetime): date, if requesting intraday
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    c = chart(symbol, timeframe, date, token, version)
+    c = chart(symbol, timeframe, date, token, version, filter)
     df = pd.DataFrame(c)
     _toDatetime(df)
     if timeframe is not None and timeframe != '1d':
@@ -444,7 +460,7 @@ def chartDF(symbol, timeframe='1m', date=None, token='', version=''):
     return df
 
 
-def bulkMinuteBars(symbol, dates, token='', version=''):
+def bulkMinuteBars(symbol, dates, token='', version='', filter=''):
     """fetch many dates worth of minute-bars for a given symbol"""
     _raiseIfNotStr(symbol)
     dates = [_strOrDate(date) for date in dates]
@@ -452,7 +468,7 @@ def bulkMinuteBars(symbol, dates, token='', version=''):
 
     args = []
     for date in dates:
-        args.append((symbol, '1d', date, token, version))
+        args.append((symbol, '1d', date, token, version, filter))
 
     pool = ThreadPool(20)
     rets = pool.starmap(chart, args)
@@ -461,9 +477,9 @@ def bulkMinuteBars(symbol, dates, token='', version=''):
     return list_orig(itertools.chain(*rets))
 
 
-def bulkMinuteBarsDF(symbol, dates, token='', version=''):
+def bulkMinuteBarsDF(symbol, dates, token='', version='', filter=''):
     """fetch many dates worth of minute-bars for a given symbol"""
-    data = bulkMinuteBars(symbol, dates, token, version)
+    data = bulkMinuteBars(symbol, dates, token, version, filter)
     df = pd.DataFrame(data)
     if df.empty:
         return df
@@ -472,7 +488,7 @@ def bulkMinuteBarsDF(symbol, dates, token='', version=''):
     return df
 
 
-def collections(tag, collectionName, token='', version=''):
+def collections(tag, collectionName, token='', version='', filter=''):
     """
     Returns an array of quote objects for a given collection type.
     Currently supported collection types are sector, tag, and list
@@ -485,16 +501,17 @@ def collections(tag, collectionName, token='', version=''):
         collectionName (string);  Associated name for tag
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     if tag not in _COLLECTION_TAGS:
         raise PyEXception('Tag must be in %s' % str(_COLLECTION_TAGS))
-    return _getJson('stock/market/collection/' + tag + '?collectionName=' + collectionName, token, version)
+    return _getJson('stock/market/collection/' + tag + '?collectionName=' + collectionName, token, version, filter)
 
 
-def collectionsDF(tag, query, token='', version=''):
+def collectionsDF(tag, query, token='', version='', filter=''):
     """
     Returns an array of quote objects for a given collection type.
     Currently supported collection types are sector, tag, and list
@@ -507,17 +524,18 @@ def collectionsDF(tag, query, token='', version=''):
         collectionName (string);  Associated name for tag
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    df = pd.DataFrame(collections(tag, query, token, version))
+    df = pd.DataFrame(collections(tag, query, token, version, filter))
     _toDatetime(df)
     _reindex(df, 'symbol')
     return df
 
 
-def company(symbol, token='', version=''):
+def company(symbol, token='', version='', filter=''):
     """
     Company reference data
 
@@ -528,15 +546,16 @@ def company(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/company', token, version)
+    return _getJson('stock/' + symbol + '/company', token, version, filter)
 
 
-def _companyToDF(c, token='', version=''):
+def _companyToDF(c, token='', version='', filter=''):
     """internal"""
     df = pd.io.json.json_normalize(c)
     _toDatetime(df)
@@ -544,7 +563,7 @@ def _companyToDF(c, token='', version=''):
     return df
 
 
-def companyDF(symbol, token='', version=''):
+def companyDF(symbol, token='', version='', filter=''):
     """
     Company reference data
 
@@ -555,16 +574,17 @@ def companyDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    c = company(symbol, token, version)
+    c = company(symbol, token, version, filter)
     df = _companyToDF(c)
     return df
 
 
-def delayedQuote(symbol, token='', version=''):
+def delayedQuote(symbol, token='', version='', filter=''):
     """
     This returns the 15 minute delayed market quote.
 
@@ -576,15 +596,16 @@ def delayedQuote(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/delayed-quote', token, version)
+    return _getJson('stock/' + symbol + '/delayed-quote', token, version, filter)
 
 
-def delayedQuoteDF(symbol, token='', version=''):
+def delayedQuoteDF(symbol, token='', version='', filter=''):
     """
     This returns the 15 minute delayed market quote.
 
@@ -596,17 +617,18 @@ def delayedQuoteDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    df = pd.io.json.json_normalize(delayedQuote(symbol, token, version))
+    df = pd.io.json.json_normalize(delayedQuote(symbol, token, version, filter))
     _toDatetime(df)
     _reindex(df, 'symbol')
     return df
 
 
-def dividends(symbol, timeframe='ytd', token='', version=''):
+def dividends(symbol, timeframe='ytd', token='', version='', filter=''):
     """
     Dividend history
 
@@ -617,6 +639,7 @@ def dividends(symbol, timeframe='ytd', token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
@@ -624,7 +647,7 @@ def dividends(symbol, timeframe='ytd', token='', version=''):
     _raiseIfNotStr(symbol)
     if timeframe not in _TIMEFRAME_DIVSPLIT:
         raise PyEXception('Range must be in %s' % str(_TIMEFRAME_DIVSPLIT))
-    return _getJson('stock/' + symbol + '/dividends/' + timeframe, token, version)
+    return _getJson('stock/' + symbol + '/dividends/' + timeframe, token, version, filter)
 
 
 def _dividendsToDF(d):
@@ -635,7 +658,7 @@ def _dividendsToDF(d):
     return df
 
 
-def dividendsDF(symbol, timeframe='ytd', token='', version=''):
+def dividendsDF(symbol, timeframe='ytd', token='', version='', filter=''):
     """
     Dividend history
 
@@ -646,16 +669,17 @@ def dividendsDF(symbol, timeframe='ytd', token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    d = dividends(symbol, timeframe, token, version)
+    d = dividends(symbol, timeframe, token, version, filter)
     df = _dividendsToDF(d)
     return df
 
 
-def earnings(symbol, token='', version=''):
+def earnings(symbol, token='', version='', filter=''):
     """
     Earnings data for a given company including the actual EPS, consensus, and fiscal period.
     Earnings are available quarterly (last 4 quarters) and annually (last 4 years).
@@ -667,12 +691,13 @@ def earnings(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/earnings', token, version)
+    return _getJson('stock/' + symbol + '/earnings', token, version, filter)
 
 
 def _earningsToDF(e):
@@ -686,7 +711,7 @@ def _earningsToDF(e):
     return df
 
 
-def earningsDF(symbol, token='', version=''):
+def earningsDF(symbol, token='', version='', filter=''):
     """
     Earnings data for a given company including the actual EPS, consensus, and fiscal period.
     Earnings are available quarterly (last 4 quarters) and annually (last 4 years).
@@ -698,16 +723,17 @@ def earningsDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    e = earnings(symbol, token, version)
+    e = earnings(symbol, token, version, filter)
     df = _earningsToDF(e)
     return df
 
 
-def earningsToday(token='', version=''):
+def earningsToday(token='', version='', filter=''):
     """
     Returns earnings that will be reported today as two arrays: before the open bto and after market close amc.
     Each array contains an object with all keys from earnings, a quote object, and a headline key.
@@ -719,14 +745,15 @@ def earningsToday(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
-    return _getJson('stock/market/today-earnings', token, version)
+    return _getJson('stock/market/today-earnings', token, version, filter)
 
 
-def earningsTodayDF(token='', version=''):
+def earningsTodayDF(token='', version='', filter=''):
     """
     Returns earnings that will be reported today as two arrays: before the open bto and after market close amc.
     Each array contains an object with all keys from earnings, a quote object, and a headline key.
@@ -738,11 +765,12 @@ def earningsTodayDF(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    x = earningsToday(token, version)
+    x = earningsToday(token, version, filter)
     z = []
     for k in x:
         ds = x[k]
@@ -759,7 +787,7 @@ def earningsTodayDF(token='', version=''):
     return df
 
 
-def spread(symbol, token='', version=''):
+def spread(symbol, token='', version='', filter=''):
     """
     This returns an array of effective spread, eligible volume, and price improvement of a stock, by market.
     Unlike volume-by-venue, this will only return a venue if effective spread is not ‘N/A’.
@@ -781,15 +809,16 @@ def spread(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/effective-spread', token, version)
+    return _getJson('stock/' + symbol + '/effective-spread', token, version, filter)
 
 
-def spreadDF(symbol, token='', version=''):
+def spreadDF(symbol, token='', version='', filter=''):
     """
     This returns an array of effective spread, eligible volume, and price improvement of a stock, by market.
     Unlike volume-by-venue, this will only return a venue if effective spread is not ‘N/A’.
@@ -811,17 +840,18 @@ def spreadDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    df = pd.DataFrame(spread(symbol, token, version))
+    df = pd.DataFrame(spread(symbol, token, version, filter))
     _toDatetime(df)
     _reindex(df, 'venue')
     return df
 
 
-def estimates(symbol, token='', version=''):
+def estimates(symbol, token='', version='', filter=''):
     """
     Provides the latest consensus estimate for the next fiscal period
 
@@ -832,12 +862,13 @@ def estimates(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/estimates', token, version)
+    return _getJson('stock/' + symbol + '/estimates', token, version, filter)
 
 
 def _estimatesToDF(f):
@@ -851,7 +882,7 @@ def _estimatesToDF(f):
     return df
 
 
-def estimatesDF(symbol, token='', version=''):
+def estimatesDF(symbol, token='', version='', filter=''):
     """
     Provides the latest consensus estimate for the next fiscal period
 
@@ -862,16 +893,17 @@ def estimatesDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
-    f = estimates(symbol, token, version)
+    f = estimates(symbol, token, version, filter)
     df = _estimatesToDF(f)
     return df
 
 
-def financials(symbol, token='', version=''):
+def financials(symbol, token='', version='', filter=''):
     """
     Pulls income statement, balance sheet, and cash flow data from the four most recent reported quarters.
 
@@ -882,12 +914,13 @@ def financials(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/financials', token, version)
+    return _getJson('stock/' + symbol + '/financials', token, version, filter)
 
 
 def _financialsToDF(f):
@@ -901,7 +934,7 @@ def _financialsToDF(f):
     return df
 
 
-def financialsDF(symbol, token='', version=''):
+def financialsDF(symbol, token='', version='', filter=''):
     """
     Pulls income statement, balance sheet, and cash flow data from the four most recent reported quarters.
 
@@ -912,16 +945,17 @@ def financialsDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    f = financials(symbol, token, version)
+    f = financials(symbol, token, version, filter)
     df = _financialsToDF(f)
     return df
 
 
-def fundOwnership(symbol, token='', version=''):
+def fundOwnership(symbol, token='', version='', filter=''):
     """
     Returns the top 10 fund holders, meaning any firm not defined as buy-side or sell-side such as mutual funds,
     pension funds, endowments, investment firms, and other large entities that manage funds on behalf of others.
@@ -933,15 +967,16 @@ def fundOwnership(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/fund-ownership', token, version)
+    return _getJson('stock/' + symbol + '/fund-ownership', token, version, filter)
 
 
-def fundOwnershipDF(symbol, token='', version=''):
+def fundOwnershipDF(symbol, token='', version='', filter=''):
     """
     Returns the top 10 fund holders, meaning any firm not defined as buy-side or sell-side such as mutual funds,
     pension funds, endowments, investment firms, and other large entities that manage funds on behalf of others.
@@ -953,18 +988,19 @@ def fundOwnershipDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
 
         DataFrame: result
     """
-    val = fundOwnership(symbol, token, version)
+    val = fundOwnership(symbol, token, version, filter)
     df = pd.DataFrame(val)
     _toDatetime(df)
     return df
 
 
-def incomeStatement(symbol, token='', version=''):
+def incomeStatement(symbol, token='', version='', filter=''):
     """
     Pulls income statement data. Available quarterly (4 quarters) or annually (4 years).
 
@@ -975,15 +1011,16 @@ def incomeStatement(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/income', token, version)
+    return _getJson('stock/' + symbol + '/income', token, version, filter)
 
 
-def incomeStatementDF(symbol, token='', version=''):
+def incomeStatementDF(symbol, token='', version='', filter=''):
     """
     Pulls income statement data. Available quarterly (4 quarters) or annually (4 years).
 
@@ -994,18 +1031,19 @@ def incomeStatementDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    val = incomeStatement(symbol, token, version)
+    val = incomeStatement(symbol, token, version, filter)
     df = pd.io.json.json_normalize(val, 'income', 'symbol')
     _toDatetime(df)
     _reindex(df, 'reportDate')
     return df
 
 
-def insiderRoster(symbol, token='', version=''):
+def insiderRoster(symbol, token='', version='', filter=''):
     """
     Returns the top 10 insiders, with the most recent information.
 
@@ -1016,15 +1054,16 @@ def insiderRoster(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/insider-roster', token, version)
+    return _getJson('stock/' + symbol + '/insider-roster', token, version, filter)
 
 
-def insiderRosterDF(symbol, token='', version=''):
+def insiderRosterDF(symbol, token='', version='', filter=''):
     """
     Returns the top 10 insiders, with the most recent information.
 
@@ -1035,17 +1074,18 @@ def insiderRosterDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    val = insiderRoster(symbol, token, version)
+    val = insiderRoster(symbol, token, version, filter)
     df = pd.DataFrame(val)
     _toDatetime(df, cols=[], tcols=['reportDate'])
     return df
 
 
-def insiderSummary(symbol, token='', version=''):
+def insiderSummary(symbol, token='', version='', filter=''):
     """
     Returns aggregated insiders summary data for the last 6 months.
 
@@ -1056,15 +1096,16 @@ def insiderSummary(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/insider-summary', token, version)
+    return _getJson('stock/' + symbol + '/insider-summary', token, version, filter)
 
 
-def insiderSummaryDF(symbol, token='', version=''):
+def insiderSummaryDF(symbol, token='', version='', filter=''):
     """
     Returns aggregated insiders summary data for the last 6 months.
 
@@ -1075,17 +1116,18 @@ def insiderSummaryDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    val = insiderSummary(symbol, token, version)
+    val = insiderSummary(symbol, token, version, filter)
     df = pd.DataFrame(val)
     _toDatetime(df)
     return df
 
 
-def insiderTransactions(symbol, token='', version=''):
+def insiderTransactions(symbol, token='', version='', filter=''):
     """
     Returns insider transactions.
 
@@ -1096,15 +1138,16 @@ def insiderTransactions(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/insider-transactions', token, version)
+    return _getJson('stock/' + symbol + '/insider-transactions', token, version, filter)
 
 
-def insiderTransactionsDF(symbol, token='', version=''):
+def insiderTransactionsDF(symbol, token='', version='', filter=''):
     """
     Returns insider transactions.
 
@@ -1115,17 +1158,18 @@ def insiderTransactionsDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    val = insiderSummary(symbol, token, version)
+    val = insiderSummary(symbol, token, version, filter)
     df = pd.DataFrame(val)
     _toDatetime(df)
     return df
 
 
-def institutionalOwnership(symbol, token='', version=''):
+def institutionalOwnership(symbol, token='', version='', filter=''):
     """
     Returns the top 10 institutional holders, defined as buy-side or sell-side firms.
 
@@ -1136,15 +1180,16 @@ def institutionalOwnership(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/institutional-ownership', token, version)
+    return _getJson('stock/' + symbol + '/institutional-ownership', token, version, filter)
 
 
-def institutionalOwnershipDF(symbol, token='', version=''):
+def institutionalOwnershipDF(symbol, token='', version='', filter=''):
     """
     Returns the top 10 institutional holders, defined as buy-side or sell-side firms.
 
@@ -1155,17 +1200,18 @@ def institutionalOwnershipDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    val = institutionalOwnership(symbol, token, version)
+    val = institutionalOwnership(symbol, token, version, filter)
     df = pd.DataFrame(val)
     _toDatetime(df, cols=[], tcols=['reportDate'])
     return df
 
 
-def intraday(symbol, token='', version=''):
+def intraday(symbol, token='', version='', filter=''):
     """
     This endpoint will return aggregated intraday prices in one minute buckets
 
@@ -1178,15 +1224,16 @@ def intraday(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/intraday-prices', token, version)
+    return _getJson('stock/' + symbol + '/intraday-prices', token, version, filter)
 
 
-def intradayDF(symbol, token='', version=''):
+def intradayDF(symbol, token='', version='', filter=''):
     """
     This endpoint will return aggregated intraday prices in one minute buckets
 
@@ -1199,18 +1246,19 @@ def intradayDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    val = intraday(symbol, token, version)
+    val = intraday(symbol, token, version, filter)
     df = pd.DataFrame(val)
     _toDatetime(df)
     _reindex(df, 'minute')
     return df
 
 
-def ipoToday(token='', version=''):
+def ipoToday(token='', version='', filter=''):
     """
     This returns a list of upcoming or today IPOs scheduled for the current and next month.
     The response is split into two structures: rawData and viewData.
@@ -1223,14 +1271,15 @@ def ipoToday(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
-    return _getJson('stock/market/today-ipos', token, version)
+    return _getJson('stock/market/today-ipos', token, version, filter)
 
 
-def ipoTodayDF(token='', version=''):
+def ipoTodayDF(token='', version='', filter=''):
     """
     This returns a list of upcoming or today IPOs scheduled for the current and next month.
     The response is split into two structures: rawData and viewData.
@@ -1243,11 +1292,12 @@ def ipoTodayDF(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    val = ipoToday(token, version)
+    val = ipoToday(token, version, filter)
     if val:
         df = pd.io.json.json_normalize(val, 'rawData')
         _toDatetime(df)
@@ -1257,7 +1307,7 @@ def ipoTodayDF(token='', version=''):
     return df
 
 
-def ipoUpcoming(token='', version=''):
+def ipoUpcoming(token='', version='', filter=''):
     """
     This returns a list of upcoming or today IPOs scheduled for the current and next month.
     The response is split into two structures: rawData and viewData.
@@ -1270,14 +1320,15 @@ def ipoUpcoming(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
-    return _getJson('stock/market/upcoming-ipos', token, version)
+    return _getJson('stock/market/upcoming-ipos', token, version, filter)
 
 
-def ipoUpcomingDF(token='', version=''):
+def ipoUpcomingDF(token='', version='', filter=''):
     """
     This returns a list of upcoming or today IPOs scheduled for the current and next month.
     The response is split into two structures: rawData and viewData.
@@ -1290,11 +1341,12 @@ def ipoUpcomingDF(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    val = ipoUpcoming(token, version)
+    val = ipoUpcoming(token, version, filter)
     if val:
         df = pd.io.json.json_normalize(val, 'rawData')
         _toDatetime(df)
@@ -1304,7 +1356,7 @@ def ipoUpcomingDF(token='', version=''):
     return df
 
 
-def keyStats(symbol, token='', version=''):
+def keyStats(symbol, token='', version='', filter=''):
     """
     Key Stats about company
 
@@ -1315,12 +1367,13 @@ def keyStats(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/stats', token, version)
+    return _getJson('stock/' + symbol + '/stats', token, version, filter)
 
 
 def _statsToDF(s):
@@ -1334,7 +1387,7 @@ def _statsToDF(s):
     return df
 
 
-def keyStatsDF(symbol, token='', version=''):
+def keyStatsDF(symbol, token='', version='', filter=''):
     """
     Key Stats about company
 
@@ -1345,16 +1398,17 @@ def keyStatsDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    s = keyStats(symbol, token, version)
+    s = keyStats(symbol, token, version, filter)
     df = _statsToDF(s)
     return df
 
 
-def largestTrades(symbol, token='', version=''):
+def largestTrades(symbol, token='', version='', filter=''):
     """
     This returns 15 minute delayed, last sale eligible trades.
 
@@ -1365,15 +1419,16 @@ def largestTrades(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/largest-trades', token, version)
+    return _getJson('stock/' + symbol + '/largest-trades', token, version, filter)
 
 
-def largestTradesDF(symbol, token='', version=''):
+def largestTradesDF(symbol, token='', version='', filter=''):
     """
     This returns 15 minute delayed, last sale eligible trades.
 
@@ -1384,17 +1439,18 @@ def largestTradesDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    df = pd.DataFrame(largestTrades(symbol, token, version))
+    df = pd.DataFrame(largestTrades(symbol, token, version, filter))
     _toDatetime(df)
     _reindex(df, 'time')
     return df
 
 
-def list(option='mostactive', token='', version=''):
+def list(option='mostactive', token='', version='', filter=''):
     """
     Returns an array of quotes for the top 10 symbols in a specified list.
 
@@ -1405,16 +1461,17 @@ def list(option='mostactive', token='', version=''):
         option (string); Option to query
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     if option not in _LIST_OPTIONS:
         raise PyEXception('Option must be in %s' % str(_LIST_OPTIONS))
-    return _getJson('stock/market/list/' + option, token, version)
+    return _getJson('stock/market/list/' + option, token, version, filter)
 
 
-def listDF(option='mostactive', token='', version=''):
+def listDF(option='mostactive', token='', version='', filter=''):
     """
     Returns an array of quotes for the top 10 symbols in a specified list.
 
@@ -1425,17 +1482,18 @@ def listDF(option='mostactive', token='', version=''):
         option (string); Option to query
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    df = pd.DataFrame(list(option, token, version))
+    df = pd.DataFrame(list(option, token, version, filter))
     _toDatetime(df)
     _reindex(df, 'symbol')
     return df
 
 
-def logo(symbol, token='', version=''):
+def logo(symbol, token='', version='', filter=''):
     """
     This is a helper function, but the google APIs url is standardized.
 
@@ -1446,15 +1504,16 @@ def logo(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/logo', token, version)
+    return _getJson('stock/' + symbol + '/logo', token, version, filter)
 
 
-def logoPNG(symbol, token='', version=''):
+def logoPNG(symbol, token='', version='', filter=''):
     """
     This is a helper function, but the google APIs url is standardized.
 
@@ -1465,16 +1524,17 @@ def logoPNG(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         image: result as png
     """
     _raiseIfNotStr(symbol)
-    response = requests.get(logo(symbol, token, version)['url'])
+    response = requests.get(logo(symbol, token, version, filter)['url'])
     return ImageP.open(BytesIO(response.content))
 
 
-def logoNotebook(symbol, token='', version=''):
+def logoNotebook(symbol, token='', version='', filter=''):
     """
     This is a helper function, but the google APIs url is standardized.
 
@@ -1485,16 +1545,17 @@ def logoNotebook(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         image: result
     """
     _raiseIfNotStr(symbol)
-    url = logo(symbol, token, version)['url']
+    url = logo(symbol, token, version, filter)['url']
     return ImageI(url=url)
 
 
-def marketVolume(token='', version=''):
+def marketVolume(token='', version='', filter=''):
     """
     This endpoint returns real time traded volume on U.S. markets.
 
@@ -1504,14 +1565,15 @@ def marketVolume(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
-    return _getJson('market/', token, version)
+    return _getJson('market/', token, version, filter)
 
 
-def marketVolumeDF(token='', version=''):
+def marketVolumeDF(token='', version='', filter=''):
     """
     This endpoint returns real time traded volume on U.S. markets.
 
@@ -1521,6 +1583,7 @@ def marketVolumeDF(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
@@ -1530,7 +1593,7 @@ def marketVolumeDF(token='', version=''):
     return df
 
 
-def news(symbol, count=10, token='', version=''):
+def news(symbol, count=10, token='', version='', filter=''):
     """
     News about company
 
@@ -1542,12 +1605,13 @@ def news(symbol, count=10, token='', version=''):
         count (int): limit number of results
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/news/last/' + str(count), token, version)
+    return _getJson('stock/' + symbol + '/news/last/' + str(count), token, version, filter)
 
 
 def _newsToDF(n):
@@ -1558,7 +1622,7 @@ def _newsToDF(n):
     return df
 
 
-def newsDF(symbol, count=10, token='', version=''):
+def newsDF(symbol, count=10, token='', version='', filter=''):
     """
     News about company
 
@@ -1570,16 +1634,17 @@ def newsDF(symbol, count=10, token='', version=''):
         count (int): limit number of results
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    n = news(symbol, count, token, version)
+    n = news(symbol, count, token, version, filter)
     df = _newsToDF(n)
     return df
 
 
-def marketNews(count=10, token='', version=''):
+def marketNews(count=10, token='', version='', filter=''):
     """
     News about market
 
@@ -1590,14 +1655,15 @@ def marketNews(count=10, token='', version=''):
         count (int): limit number of results
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
-    return _getJson('stock/market/news/last/' + str(count), token, version)
+    return _getJson('stock/market/news/last/' + str(count), token, version, filter)
 
 
-def marketNewsDF(count=10, token='', version=''):
+def marketNewsDF(count=10, token='', version='', filter=''):
     """
     News about market
 
@@ -1608,17 +1674,18 @@ def marketNewsDF(count=10, token='', version=''):
         count (int): limit number of results
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    df = pd.DataFrame(marketNews(count, token, version))
+    df = pd.DataFrame(marketNews(count, token, version, filter))
     _toDatetime(df)
     _reindex(df, 'datetime')
     return df
 
 
-def ohlc(symbol, token='', version=''):
+def ohlc(symbol, token='', version='', filter=''):
     """
     Returns the official open and close for a give symbol.
 
@@ -1629,15 +1696,16 @@ def ohlc(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/ohlc', token, version)
+    return _getJson('stock/' + symbol + '/ohlc', token, version, filter)
 
 
-def ohlcDF(symbol, token='', version=''):
+def ohlcDF(symbol, token='', version='', filter=''):
     """
     Returns the official open and close for a give symbol.
 
@@ -1648,11 +1716,12 @@ def ohlcDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    o = ohlc(symbol, token, version)
+    o = ohlc(symbol, token, version, filter)
     if o:
         df = pd.io.json.json_normalize(o)
         _toDatetime(df)
@@ -1661,7 +1730,7 @@ def ohlcDF(symbol, token='', version=''):
     return df
 
 
-def marketOhlc(token='', version=''):
+def marketOhlc(token='', version='', filter=''):
     """
     Returns the official open and close for whole market.
 
@@ -1671,14 +1740,15 @@ def marketOhlc(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
-    return _getJson('stock/market/ohlc', token, version)
+    return _getJson('stock/market/ohlc', token, version, filter)
 
 
-def marketOhlcDF(token='', version=''):
+def marketOhlcDF(token='', version='', filter=''):
     """
     Returns the official open and close for whole market.
 
@@ -1688,11 +1758,12 @@ def marketOhlcDF(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    x = marketOhlc(token, version)
+    x = marketOhlc(token, version, filter)
     data = []
     for key in x:
         data.append(x[key])
@@ -1703,7 +1774,7 @@ def marketOhlcDF(token='', version=''):
     return df
 
 
-def optionExpirations(symbol, token='', version=''):
+def optionExpirations(symbol, token='', version='', filter=''):
     """
     Returns end of day options data
 
@@ -1714,15 +1785,16 @@ def optionExpirations(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/options', token, version)
+    return _getJson('stock/' + symbol + '/options', token, version, filter)
 
 
-def options(symbol, expiration, side='', token='', version=''):
+def options(symbol, expiration, side='', token='', version='', filter=''):
     """
     Returns end of day options data
 
@@ -1735,6 +1807,7 @@ def options(symbol, expiration, side='', token='', version=''):
         side (string); Side (optional)
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
@@ -1743,12 +1816,12 @@ def options(symbol, expiration, side='', token='', version=''):
     if side:
         return _getJson(
             'stock/{symbol}/options/{expiration}/{side}'.format(symbol=symbol, expiration=expiration, side=side), token,
-            version)
+            version, filter)
     return _getJson('stock/{symbol}/options/{expiration}/'.format(symbol=symbol, expiration=expiration, side=side),
-                    token, version)
+                    token, version, filter)
 
 
-def optionsDF(symbol, expiration, side='', token='', version=''):
+def optionsDF(symbol, expiration, side='', token='', version='', filter=''):
     """
     Returns end of day options data
 
@@ -1761,17 +1834,18 @@ def optionsDF(symbol, expiration, side='', token='', version=''):
         side (string); Side (optional)
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    p = options(symbol, expiration, side, token, version)
+    p = options(symbol, expiration, side, token, version, filter)
     df = pd.DataFrame(p)
     _toDatetime(df)
     return df
 
 
-def peers(symbol, token='', version=''):
+def peers(symbol, token='', version='', filter=''):
     """
     Peers of ticker
 
@@ -1782,12 +1856,13 @@ def peers(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/peers', token, version)
+    return _getJson('stock/' + symbol + '/peers', token, version, filter)
 
 
 def _peersToDF(p):
@@ -1799,7 +1874,7 @@ def _peersToDF(p):
     return df
 
 
-def peersDF(symbol, token='', version=''):
+def peersDF(symbol, token='', version='', filter=''):
     """
     Peers of ticker
 
@@ -1810,16 +1885,17 @@ def peersDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    p = peers(symbol, token, version)
+    p = peers(symbol, token, version, filter)
     df = _peersToDF(p)
     return df
 
 
-def yesterday(symbol, token='', version=''):
+def yesterday(symbol, token='', version='', filter=''):
     """
     This returns previous day adjusted price data for one or more stocks
 
@@ -1830,15 +1906,16 @@ def yesterday(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/previous', token, version)
+    return _getJson('stock/' + symbol + '/previous', token, version, filter)
 
 
-def yesterdayDF(symbol, token='', version=''):
+def yesterdayDF(symbol, token='', version='', filter=''):
     """
     This returns previous day adjusted price data for one or more stocks
 
@@ -1849,11 +1926,12 @@ def yesterdayDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    y = yesterday(symbol, token, version)
+    y = yesterday(symbol, token, version, filter)
     if y:
         df = pd.io.json.json_normalize(y)
         _toDatetime(df)
@@ -1863,7 +1941,7 @@ def yesterdayDF(symbol, token='', version=''):
     return df
 
 
-def marketYesterday(token='', version=''):
+def marketYesterday(token='', version='', filter=''):
     """
     This returns previous day adjusted price data for whole market
 
@@ -1874,14 +1952,15 @@ def marketYesterday(token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
-    return _getJson('stock/market/previous', token, version)
+    return _getJson('stock/market/previous', token, version, filter)
 
 
-def marketYesterdayDF(token='', version=''):
+def marketYesterdayDF(token='', version='', filter=''):
     """
     This returns previous day adjusted price data for whole market
 
@@ -1892,11 +1971,12 @@ def marketYesterdayDF(token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    x = marketYesterday(token, version)
+    x = marketYesterday(token, version, filter)
     data = []
     for key in x:
         data.append(x[key])
@@ -1907,7 +1987,7 @@ def marketYesterdayDF(token='', version=''):
     return df
 
 
-def price(symbol, token='', version=''):
+def price(symbol, token='', version='', filter=''):
     """
     Price of ticker
 
@@ -1918,15 +1998,16 @@ def price(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/price', token, version)
+    return _getJson('stock/' + symbol + '/price', token, version, filter)
 
 
-def priceDF(symbol, token='', version=''):
+def priceDF(symbol, token='', version='', filter=''):
     """
     Price of ticker
 
@@ -1937,16 +2018,17 @@ def priceDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    df = pd.io.json.json_normalize({'price': price(symbol, token, version)})
+    df = pd.io.json.json_normalize({'price': price(symbol, token, version, filter)})
     _toDatetime(df)
     return df
 
 
-def priceTarget(symbol, token='', version=''):
+def priceTarget(symbol, token='', version='', filter=''):
     """
     Provides the latest avg, high, and low analyst price target for a symbol.
 
@@ -1957,15 +2039,16 @@ def priceTarget(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/price-target', token, version)
+    return _getJson('stock/' + symbol + '/price-target', token, version, filter)
 
 
-def priceTargetDF(symbol, token='', version=''):
+def priceTargetDF(symbol, token='', version='', filter=''):
     """
     Provides the latest avg, high, and low analyst price target for a symbol.
 
@@ -1976,16 +2059,17 @@ def priceTargetDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    df = pd.io.json.json_normalize(priceTarget(symbol, token, version))
+    df = pd.io.json.json_normalize(priceTarget(symbol, token, version, filter))
     _toDatetime(df)
     return df
 
 
-def quote(symbol, token='', version=''):
+def quote(symbol, token='', version='', filter=''):
     """
     Get quote for ticker
 
@@ -1997,15 +2081,16 @@ def quote(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/quote', token, version)
+    return _getJson('stock/' + symbol + '/quote', token, version, filter)
 
 
-def quoteDF(symbol, token='', version=''):
+def quoteDF(symbol, token='', version='', filter=''):
     """
     Get quote for ticker
 
@@ -2017,11 +2102,12 @@ def quoteDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    q = quote(symbol, token, version)
+    q = quote(symbol, token, version, filter)
     if q:
         df = pd.io.json.json_normalize(q)
         _toDatetime(df)
@@ -2031,7 +2117,7 @@ def quoteDF(symbol, token='', version=''):
     return df
 
 
-def relevant(symbol, token='', version=''):
+def relevant(symbol, token='', version='', filter=''):
     """
     Same as peers
 
@@ -2040,15 +2126,16 @@ def relevant(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/relevant', token, version)
+    return _getJson('stock/' + symbol + '/relevant', token, version, filter)
 
 
-def relevantDF(symbol, token='', version=''):
+def relevantDF(symbol, token='', version='', filter=''):
     """
     Same as peers
 
@@ -2057,16 +2144,17 @@ def relevantDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    df = pd.DataFrame(relevant(symbol, token, version))
+    df = pd.DataFrame(relevant(symbol, token, version, filter))
     _toDatetime(df)
     return df
 
 
-def sectorPerformance(token='', version=''):
+def sectorPerformance(token='', version='', filter=''):
     """
     This returns an array of each sector and performance for the current trading day.
     Performance is based on each sector ETF.
@@ -2077,14 +2165,15 @@ def sectorPerformance(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
-    return _getJson('stock/market/sector-performance', token, version)
+    return _getJson('stock/market/sector-performance', token, version, filter)
 
 
-def sectorPerformanceDF(token='', version=''):
+def sectorPerformanceDF(token='', version='', filter=''):
     """
     This returns an array of each sector and performance for the current trading day.
     Performance is based on each sector ETF.
@@ -2095,17 +2184,18 @@ def sectorPerformanceDF(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    df = pd.DataFrame(sectorPerformance(token, version))
+    df = pd.DataFrame(sectorPerformance(token, version, filter))
     _toDatetime(df, cols=[], tcols=['lastUpdated'])
     _reindex(df, 'name')
     return df
 
 
-def splits(symbol, timeframe='ytd', token='', version=''):
+def splits(symbol, timeframe='ytd', token='', version='', filter=''):
     """
     Stock split history
 
@@ -2116,6 +2206,7 @@ def splits(symbol, timeframe='ytd', token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
@@ -2123,7 +2214,7 @@ def splits(symbol, timeframe='ytd', token='', version=''):
     _raiseIfNotStr(symbol)
     if timeframe not in _TIMEFRAME_DIVSPLIT:
         raise PyEXception('Range must be in %s' % str(_TIMEFRAME_DIVSPLIT))
-    return _getJson('stock/' + symbol + '/splits/' + timeframe, token, version)
+    return _getJson('stock/' + symbol + '/splits/' + timeframe, token, version, filter)
 
 
 def _splitsToDF(s):
@@ -2134,7 +2225,7 @@ def _splitsToDF(s):
     return df
 
 
-def splitsDF(symbol, timeframe='ytd', token='', version=''):
+def splitsDF(symbol, timeframe='ytd', token='', version='', filter=''):
     """
     Stock split history
 
@@ -2145,16 +2236,17 @@ def splitsDF(symbol, timeframe='ytd', token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    s = splits(symbol, timeframe, token, version)
+    s = splits(symbol, timeframe, token, version, filter)
     df = _splitsToDF(s)
     return df
 
 
-def volumeByVenue(symbol, token='', version=''):
+def volumeByVenue(symbol, token='', version='', filter=''):
     """
     This returns 15 minute delayed and 30 day average consolidated volume percentage of a stock, by market.
     This call will always return 13 values, and will be sorted in ascending
@@ -2168,15 +2260,16 @@ def volumeByVenue(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     _raiseIfNotStr(symbol)
-    return _getJson('stock/' + symbol + '/volume-by-venue', token, version)
+    return _getJson('stock/' + symbol + '/volume-by-venue', token, version, filter)
 
 
-def volumeByVenueDF(symbol, token='', version=''):
+def volumeByVenueDF(symbol, token='', version='', filter=''):
     """
     This returns 15 minute delayed and 30 day average consolidated volume percentage of a stock, by market.
     This call will always return 13 values, and will be sorted in ascending
@@ -2190,17 +2283,18 @@ def volumeByVenueDF(symbol, token='', version=''):
         symbol (string); Ticker to request
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    df = pd.DataFrame(volumeByVenue(symbol, token, version))
+    df = pd.DataFrame(volumeByVenue(symbol, token, version, filter))
     _toDatetime(df)
     _reindex(df, 'venue')
     return df
 
 
-def threshold(date=None, token='', version=''):
+def threshold(date=None, token='', version='', filter=''):
     """
     The following are IEX-listed securities that have an aggregate fail to deliver position for
     five consecutive settlement days at a registered clearing agency, totaling 10,000 shares or more
@@ -2213,17 +2307,18 @@ def threshold(date=None, token='', version=''):
         date (datetime); Effective Datetime
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     if date:
         date = _strOrDate(date)
-        return _getJson('stock/market/threshold-securities/' + date, token, version)
-    return _getJson('stock/market/threshold-securities', token, version)
+        return _getJson('stock/market/threshold-securities/' + date, token, version, filter)
+    return _getJson('stock/market/threshold-securities', token, version, filter)
 
 
-def thresholdDF(date=None, token='', version=''):
+def thresholdDF(date=None, token='', version='', filter=''):
     """
     The following are IEX-listed securities that have an aggregate fail to deliver position for
     five consecutive settlement days at a registered clearing agency, totaling 10,000 shares or more
@@ -2236,16 +2331,17 @@ def thresholdDF(date=None, token='', version=''):
         date (datetime); Effective Datetime
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    df = pd.DataFrame(threshold(date, token, version))
+    df = pd.DataFrame(threshold(date, token, version, filter))
     _toDatetime(df)
     return df
 
 
-def shortInterest(symbol, date=None, token='', version=''):
+def shortInterest(symbol, date=None, token='', version='', filter=''):
     """
     The consolidated market short interest positions in all IEX-listed securities
     are included in the IEX Short Interest Report.
@@ -2259,6 +2355,7 @@ def shortInterest(symbol, date=None, token='', version=''):
         date (datetime); Effective Datetime
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
@@ -2266,11 +2363,11 @@ def shortInterest(symbol, date=None, token='', version=''):
     _raiseIfNotStr(symbol)
     if date:
         date = _strOrDate(date)
-        return _getJson('stock/' + symbol + '/short-interest/' + date, token, version)
-    return _getJson('stock/' + symbol + '/short-interest', token, version)
+        return _getJson('stock/' + symbol + '/short-interest/' + date, token, version, filter)
+    return _getJson('stock/' + symbol + '/short-interest', token, version, filter)
 
 
-def shortInterestDF(symbol, date=None, token='', version=''):
+def shortInterestDF(symbol, date=None, token='', version='', filter=''):
     """
     The consolidated market short interest positions in all IEX-listed securities
     are included in the IEX Short Interest Report.
@@ -2284,16 +2381,17 @@ def shortInterestDF(symbol, date=None, token='', version=''):
         date (datetime); Effective Datetime
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    df = pd.DataFrame(shortInterest(symbol, date, token, version))
+    df = pd.DataFrame(shortInterest(symbol, date, token, version, filter))
     _toDatetime(df)
     return df
 
 
-def marketShortInterest(date=None, token='', version=''):
+def marketShortInterest(date=None, token='', version='', filter=''):
     """
     The consolidated market short interest positions in all IEX-listed securities
     are included in the IEX Short Interest Report.
@@ -2306,17 +2404,18 @@ def marketShortInterest(date=None, token='', version=''):
         date (datetime); Effective Datetime
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     if date:
         date = _strOrDate(date)
-        return _getJson('stock/market/short-interest/' + date, token, version)
-    return _getJson('stock/market/short-interest', token, version)
+        return _getJson('stock/market/short-interest/' + date, token, version, filter)
+    return _getJson('stock/market/short-interest', token, version, filter)
 
 
-def marketShortInterestDF(date=None, token='', version=''):
+def marketShortInterestDF(date=None, token='', version='', filter=''):
     """
     The consolidated market short interest positions in all IEX-listed securities
     are included in the IEX Short Interest Report.
@@ -2329,11 +2428,12 @@ def marketShortInterestDF(date=None, token='', version=''):
         date (datetime); Effective Datetime
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    df = pd.DataFrame(marketShortInterest(date, token, version))
+    df = pd.DataFrame(marketShortInterest(date, token, version, filter))
     _toDatetime(df)
     return df
 

@@ -1,8 +1,8 @@
 tests: ## Clean and Make unit tests
-	python3 -m pytest -v tests --cov=pyEX
+	IEX_TOKEN=Tpk_ecc89ddf30a611e9958142010a80043c python3 -m pytest -v tests --cov=pyEX
 
 test: lint ## run the tests for travis CI
-	@ python3 -m pytest -v tests --cov=pyEX
+	IEX_TOKEN=Tpk_ecc89ddf30a611e9958142010a80043c python3 -m pytest -v tests --cov=pyEX
 
 lint: ## run linter
 	flake8 pyEX 
@@ -25,7 +25,7 @@ docs:  ## make documentation
 	open ./docs/_build/html/index.html
 
 install:  ## install to site-packages
-	python3 setup.py install
+	pip3 install .
 
 micro:  ## steps before dist, defaults to previous tag + one micro
 	. scripts/deploy.sh MICRO

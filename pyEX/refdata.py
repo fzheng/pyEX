@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
+# -*- coding: utf-8 -*-
 import pandas as pd
 from deprecation import deprecated
 
 from .common import _getJson, _strOrDate, _reindex, _toDatetime
 
 
-def exchanges(token='', version=''):
+def exchanges(token='', version='', filter=''):
     """
     Returns an array of U.S. exchanges.
 
@@ -16,14 +17,15 @@ def exchanges(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
-    return _getJson('ref-data/market/us/exchanges', token, version)
+    return _getJson('ref-data/market/us/exchanges', token, version, filter)
 
 
-def exchangesDF(token='', version=''):
+def exchangesDF(token='', version='', filter=''):
     """
     Returns an array of U.S. exchanges.
 
@@ -33,14 +35,15 @@ def exchangesDF(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    return pd.DataFrame(exchanges(token, version))
+    return pd.DataFrame(exchanges(token, version, filter))
 
 
-def internationalExchanges(token='', version=''):
+def internationalExchanges(token='', version='', filter=''):
     """
     Returns an array of exchanges.
 
@@ -50,14 +53,15 @@ def internationalExchanges(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
-    return _getJson('ref-data/exchanges', token, version)
+    return _getJson('ref-data/exchanges', token, version, filter)
 
 
-def internationalExchangesDF(token='', version=''):
+def internationalExchangesDF(token='', version='', filter=''):
     """
     Returns an array of U.S. exchanges.
 
@@ -67,14 +71,15 @@ def internationalExchangesDF(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    return pd.DataFrame(internationalExchanges(token, version))
+    return pd.DataFrame(internationalExchanges(token, version, filter))
 
 
-def sectors(token='', version=''):
+def sectors(token='', version='', filter=''):
     """
     Returns an array of sectors.
 
@@ -83,14 +88,15 @@ def sectors(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
-    return _getJson('ref-data/sectors', token, version)
+    return _getJson('ref-data/sectors', token, version, filter)
 
 
-def sectorsDF(token='', version=''):
+def sectorsDF(token='', version='', filter=''):
     """
     Returns an array of sectors.
 
@@ -99,14 +105,15 @@ def sectorsDF(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    return pd.DataFrame(sectors(token, version))
+    return pd.DataFrame(sectors(token, version, filter))
 
 
-def tags(token='', version=''):
+def tags(token='', version='', filter=''):
     """
     Returns an array of tags.
 
@@ -115,14 +122,15 @@ def tags(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
-    return _getJson('ref-data/tags', token, version)
+    return _getJson('ref-data/tags', token, version, filter)
 
 
-def tagsDF(token='', version=''):
+def tagsDF(token='', version='', filter=''):
     """
     Returns an array of tags.
 
@@ -131,14 +139,15 @@ def tagsDF(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    return pd.DataFrame(tags(token, version))
+    return pd.DataFrame(tags(token, version, filter))
 
 
-def calendar(type='holiday', direction='next', last=1, startDate=None, token='', version=''):
+def calendar(type='holiday', direction='next', last=1, startDate=None, token='', version='', filter=''):
     """
     This call allows you to fetch a number of trade dates or holidays from a given date.
     For example, if you want the next trading day, you would call /ref-data/us/dates/trade/next/1.
@@ -153,6 +162,7 @@ def calendar(type='holiday', direction='next', last=1, startDate=None, token='',
         startDate (date); start date for next or last, YYYYMMDD
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
@@ -161,11 +171,11 @@ def calendar(type='holiday', direction='next', last=1, startDate=None, token='',
         startDate = _strOrDate(startDate)
         return _getJson(
             'ref-data/us/dates/{type}/{direction}/{last}/{date}'.format(type=type, direction=direction, last=last,
-                                                                        date=startDate), token, version)
-    return _getJson('ref-data/us/dates/' + type + '/' + direction + '/' + str(last), token, version)
+                                                                        date=startDate), token, version, filter)
+    return _getJson('ref-data/us/dates/' + type + '/' + direction + '/' + str(last), token, version, filter)
 
 
-def calendarDF(type='holiday', direction='next', last=1, startDate=None, token='', version=''):
+def calendarDF(type='holiday', direction='next', last=1, startDate=None, token='', version='', filter=''):
     """
     This call allows you to fetch a number of trade dates or holidays from a given date.
     For example, if you want the next trading day, you would call /ref-data/us/dates/trade/next/1.
@@ -180,16 +190,17 @@ def calendarDF(type='holiday', direction='next', last=1, startDate=None, token='
         startDate (date); start date for next or last, YYYYMMDD
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
-    dat = pd.DataFrame(calendar(type, direction, last, startDate, token, version))
+    dat = pd.DataFrame(calendar(type, direction, last, startDate, token, version, filter))
     _toDatetime(dat)
     return dat
 
 
-def holidays(direction='next', last=1, startDate=None, token='', version=''):
+def holidays(direction='next', last=1, startDate=None, token='', version='', filter=''):
     """
     This call allows you to fetch a number of trade dates or holidays from a given date.
     For example, if you want the next trading day, you would call /ref-data/us/dates/trade/next/1.
@@ -203,14 +214,15 @@ def holidays(direction='next', last=1, startDate=None, token='', version=''):
         startDate (date); start date for next or last, YYYYMMDD
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
-    return calendar('holiday', direction, last, startDate, token, version)
+    return calendar('holiday', direction, last, startDate, token, version, filter)
 
 
-def holidaysDF(direction='next', last=1, startDate=None, token='', version=''):
+def holidaysDF(direction='next', last=1, startDate=None, token='', version='', filter=''):
     """
     This call allows you to fetch a number of trade dates or holidays from a given date.
     For example, if you want the next trading day, you would call /ref-data/us/dates/trade/next/1.
@@ -224,14 +236,15 @@ def holidaysDF(direction='next', last=1, startDate=None, token='', version=''):
         startDate (date); start date for next or last, YYYYMMDD
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
-    return calendarDF('holiday', direction, last, startDate, token, version)
+    return calendarDF('holiday', direction, last, startDate, token, version, filter)
 
 
-def symbols(token='', version=''):
+def symbols(token='', version='', filter=''):
     """
     This call returns an array of symbols that IEX Cloud supports for API calls.
 
@@ -241,14 +254,15 @@ def symbols(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
-    return _getJson('ref-data/symbols', token, version)
+    return _getJson('ref-data/symbols', token, version, filter)
 
 
-def iexSymbols(token='', version=''):
+def iexSymbols(token='', version='', filter=''):
     """
     This call returns an array of symbols the Investors Exchange supports for trading.
     This list is updated daily as of 7:45 a.m. ET.
@@ -260,14 +274,15 @@ def iexSymbols(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
-    return _getJson('ref-data/iex/symbols', token, version)
+    return _getJson('ref-data/iex/symbols', token, version, filter)
 
 
-def mutualFundSymbols(token='', version=''):
+def mutualFundSymbols(token='', version='', filter=''):
     """
     This call returns an array of mutual fund symbols that IEX Cloud supports for API calls.
 
@@ -277,14 +292,15 @@ def mutualFundSymbols(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
-    return _getJson('ref-data/mutual-fund/symbols', token, version)
+    return _getJson('ref-data/mutual-fund/symbols', token, version, filter)
 
 
-def otcSymbols(token='', version=''):
+def otcSymbols(token='', version='', filter=''):
     """
     This call returns an array of OTC symbols that IEX Cloud supports for API calls.
 
@@ -294,14 +310,15 @@ def otcSymbols(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
-    return _getJson('ref-data/otc/symbols', token, version)
+    return _getJson('ref-data/otc/symbols', token, version, filter)
 
 
-def internationalSymbols(region='', exchange='', token='', version=''):
+def internationalSymbols(region='', exchange='', token='', version='', filter=''):
     """
     This call returns an array of international symbols that IEX Cloud supports for API calls.
 
@@ -313,15 +330,16 @@ def internationalSymbols(region='', exchange='', token='', version=''):
         exchange (string): Case insensitive string of Exchange using IEX Supported Exchanges list
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     if region:
-        return _getJson('ref-data/region/{region}/symbols'.format(region=region), token, version)
+        return _getJson('ref-data/region/{region}/symbols'.format(region=region), token, version, filter)
     elif exchange:
-        return _getJson('ref-data/exchange/{exchange}/exchange'.format(exchange=exchange), token, version)
-    return _getJson('ref-data/region/us/symbols', token, version)
+        return _getJson('ref-data/exchange/{exchange}/symbols'.format(exchange=exchange), token, version, filter)
+    return _getJson('ref-data/region/us/symbols', token, version, filter)
 
 
 def fxSymbols(token='', version=''):
@@ -341,7 +359,7 @@ def fxSymbols(token='', version=''):
     return _getJson('ref-data/fx/symbols', token, version)
 
 
-def optionsSymbols(token='', version=''):
+def optionsSymbols(token='', version='', filter=''):
     """
     This call returns an object keyed by symbol with the value of each symbol
     being an array of available contract dates.
@@ -352,14 +370,15 @@ def optionsSymbols(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
-    return _getJson('ref-data/options/symbols', token, version)
+    return _getJson('ref-data/options/symbols', token, version, filter)
 
 
-def symbolsDF(token='', version=''):
+def symbolsDF(token='', version='', filter=''):
     """
     This call returns an array of symbols that IEX Cloud supports for API calls.
 
@@ -369,17 +388,18 @@ def symbolsDF(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dataframe: result
     """
-    df = pd.DataFrame(symbols(token, version))
+    df = pd.DataFrame(symbols(token, version, filter))
     _toDatetime(df)
     _reindex(df, 'symbol')
     return df
 
 
-def iexSymbolsDF(token='', version=''):
+def iexSymbolsDF(token='', version='', filter=''):
     """
     This call returns an array of symbols the Investors Exchange supports for trading.
     This list is updated daily as of 7:45 a.m. ET.
@@ -391,17 +411,18 @@ def iexSymbolsDF(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    df = pd.DataFrame(iexSymbols(token, version))
+    df = pd.DataFrame(iexSymbols(token, version, filter))
     _toDatetime(df)
     _reindex(df, 'symbol')
     return df
 
 
-def mutualFundSymbolsDF(token='', version=''):
+def mutualFundSymbolsDF(token='', version='', filter=''):
     """
     This call returns an array of mutual fund symbols that IEX Cloud supports for API calls.
 
@@ -411,17 +432,18 @@ def mutualFundSymbolsDF(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    df = pd.DataFrame(mutualFundSymbols(token, version))
+    df = pd.DataFrame(mutualFundSymbols(token, version, filter))
     _toDatetime(df)
     _reindex(df, 'symbol')
     return df
 
 
-def otcSymbolsDF(token='', version=''):
+def otcSymbolsDF(token='', version='', filter=''):
     """
     This call returns an array of OTC symbols that IEX Cloud supports for API calls.
 
@@ -431,17 +453,18 @@ def otcSymbolsDF(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    df = pd.DataFrame(otcSymbols(token, version))
+    df = pd.DataFrame(otcSymbols(token, version, filter))
     _toDatetime(df)
     _reindex(df, 'symbol')
     return df
 
 
-def internationalSymbolsDF(region='', exchange='', token='', version=''):
+def internationalSymbolsDF(region='', exchange='', token='', version='', filter=''):
     """
     This call returns an array of international symbols that IEX Cloud supports for API calls.
 
@@ -453,11 +476,12 @@ def internationalSymbolsDF(region='', exchange='', token='', version=''):
         exchange (string): Case insensitive string of Exchange using IEX Supported Exchanges list
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    df = pd.DataFrame(internationalSymbols(region, exchange, token, version))
+    df = pd.DataFrame(internationalSymbols(region, exchange, token, version, filter))
     _toDatetime(df)
     _reindex(df, 'symbol')
     return df
@@ -484,7 +508,7 @@ def fxSymbolsDF(token='', version=''):
     return [df1, df2]
 
 
-def optionsSymbolsDF(token='', version=''):
+def optionsSymbolsDF(token='', version='', filter=''):
     """
     This call returns an object keyed by symbol with the value of each symbol
     being an array of available contract dates.
@@ -495,11 +519,12 @@ def optionsSymbolsDF(token='', version=''):
     Args:
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    df = pd.io.json.json_normalize(optionsSymbols(token, version))
+    df = pd.io.json.json_normalize(optionsSymbols(token, version, filter))
     df = df.T
     df.columns = ['expirations']
     return df
@@ -519,7 +544,7 @@ def symbolsList(token='', version=''):
     Returns:
         list: result
     """
-    return symbolsDF(token, version).index.tolist()
+    return [x['symbol'] for x in symbols(token, version, filter='symbol')]
 
 
 def iexSymbolsList(token='', version=''):
@@ -538,7 +563,7 @@ def iexSymbolsList(token='', version=''):
     Returns:
         list: result
     """
-    return iexSymbolsDF(token, version).index.tolist()
+    return [x['symbol'] for x in iexSymbols(token, version, filter='symbol')]
 
 
 def mutualFundSymbolsList(token='', version=''):
@@ -555,7 +580,7 @@ def mutualFundSymbolsList(token='', version=''):
     Returns:
         List: result
     """
-    return mutualFundSymbolsDF(token, version).index.tolist()
+    return [x['symbol'] for x in mutualFundSymbols(token, version, filter='symbol')]
 
 
 def otcSymbolsList(token='', version=''):
@@ -572,7 +597,7 @@ def otcSymbolsList(token='', version=''):
     Returns:
         list: result
     """
-    return otcSymbolsDF(token, version).index.tolist()
+    return [x['symbol'] for x in otcSymbols(token, version, filter='symbol')]
 
 
 def internationalSymbolsList(region='', exchange='', token='', version=''):
@@ -591,7 +616,7 @@ def internationalSymbolsList(region='', exchange='', token='', version=''):
     Returns:
         list: result
     """
-    return internationalSymbolsDF(region, exchange, token, version).index.tolist()
+    return [x['symbol'] for x in internationalSymbols(region, exchange, token, version, filter='symbol')]
 
 
 def fxSymbolsList(token='', version=''):
@@ -632,136 +657,144 @@ def optionsSymbolsList(token='', version=''):
     Returns:
         list: result
     """
-    return optionsSymbolsDF(token, version).index.tolist()
+    return [x['symbol'] for x in optionsSymbols(token, version, filter='symbol')]
 
 
 @deprecated(details='Deprecated: IEX Cloud status unknown')
-def corporateActions(date=None, token='', version=''):
+def corporateActions(date=None, token='', version='', filter=''):
     """
     Args:
         date (datetime): Effective date
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     if date:
         date = _strOrDate(date)
-        return _getJson('ref-data/daily-list/corporate-actions/' + date, token, version)
-    return _getJson('ref-data/daily-list/corporate-actions', token, version)
+        return _getJson('ref-data/daily-list/corporate-actions/' + date, token, version, filter)
+    return _getJson('ref-data/daily-list/corporate-actions', token, version, filter)
 
 
 @deprecated(details='Deprecated: IEX Cloud status unknown')
-def corporateActionsDF(date=None, token='', version=''):
+def corporateActionsDF(date=None, token='', version='', filter=''):
     """
     Args:
         date (datetime): Effective date
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    df = pd.DataFrame(corporateActions(date, token, version))
+    df = pd.DataFrame(corporateActions(date, token, version, filter))
     _toDatetime(df)
     return df
 
 
 @deprecated(details='Deprecated: IEX Cloud status unknown')
-def dividends(date=None, token='', version=''):
+def dividends(date=None, token='', version='', filter=''):
     """
     Args:
         date (datetime): Effective date
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     if date:
         date = _strOrDate(date)
-        return _getJson('ref-data/daily-list/dividends/' + date, token, version)
-    return _getJson('ref-data/daily-list/dividends', token, version)
+        return _getJson('ref-data/daily-list/dividends/' + date, token, version, filter)
+    return _getJson('ref-data/daily-list/dividends', token, version, filter)
 
 
 @deprecated(details='Deprecated: IEX Cloud status unknown')
-def dividendsDF(date=None, token='', version=''):
+def dividendsDF(date=None, token='', version='', filter=''):
     """
     Args:
         date (datetime): Effective date
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    df = pd.DataFrame(dividends(date, token, version))
+    df = pd.DataFrame(dividends(date, token, version, filter))
     _toDatetime(df)
     return df
 
 
 @deprecated(details='Deprecated: IEX Cloud status unknown')
-def nextDayExtDate(date=None, token='', version=''):
+def nextDayExtDate(date=None, token='', version='', filter=''):
     """
     Args:
         date (datetime): Effective date
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     if date:
         date = _strOrDate(date)
-        return _getJson('ref-data/daily-list/next-day-ex-date/' + date, token, version)
-    return _getJson('ref-data/daily-list/next-day-ex-date', token, version)
+        return _getJson('ref-data/daily-list/next-day-ex-date/' + date, token, version, filter)
+    return _getJson('ref-data/daily-list/next-day-ex-date', token, version, filter)
 
 
 @deprecated(details='Deprecated: IEX Cloud status unknown')
-def nextDayExtDateDF(date=None, token='', version=''):
+def nextDayExtDateDF(date=None, token='', version='', filter=''):
     """
     Args:
         date (datetime): Effective date
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         DataFrame: result
     """
-    df = pd.DataFrame(nextDayExtDate(date, token, version))
+    df = pd.DataFrame(nextDayExtDate(date, token, version, filter))
     _toDatetime(df)
     return df
 
 
 @deprecated(details='Deprecated: IEX Cloud status unknown')
-def directory(date=None, token='', version=''):
+def directory(date=None, token='', version='', filter=''):
     """
     Args:
         date (datetime): Effective date
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
     if date:
         date = _strOrDate(date)
-        return _getJson('ref-data/daily-list/symbol-directory/' + date, token, version)
-    return _getJson('ref-data/daily-list/symbol-directory', token, version)
+        return _getJson('ref-data/daily-list/symbol-directory/' + date, token, version, filter)
+    return _getJson('ref-data/daily-list/symbol-directory', token, version, filter)
 
 
 @deprecated(details='Deprecated: IEX Cloud status unknown')
-def directoryDF(date=None, token='', version=''):
+def directoryDF(date=None, token='', version='', filter=''):
     """
     Args:
         date (datetime): Effective date
         token (string); Access token
         version (string); API version
+        filter (string); filters: https://iexcloud.io/docs/api/#filter-results
 
     Returns:
         dict: result
     """
-    df = pd.DataFrame(directory(date, token, version))
+    df = pd.DataFrame(directory(date, token, version, filter))
     _toDatetime(df)
     return df
